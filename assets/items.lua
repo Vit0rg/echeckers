@@ -1,0 +1,3 @@
+--food
+--weapons
+-- anything that can change attack, speed or defense

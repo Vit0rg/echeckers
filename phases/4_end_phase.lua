@@ -1,0 +1,1 @@
+-- cards in hand > 6, discard 

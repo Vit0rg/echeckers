@@ -1,0 +1,36 @@
+#! /usr/bin/env bash
+
+config_file="build_files.txt"
+target="processed_script.lua"
+
+SCRIPT_DIR=${BASH_SOURCE%/*}
+
+files_to_process=()
+
+while IFS= read -r entry || [[ -n "$entry" ]]; do
+  [[ -z "$entry" || "$entry" =~ ^# ]] && continue
+
+  full_path="$SCRIPT_DIR/$entry"
+
+  if [[ -d "$full_path" ]]; then
+    while IFS= read -r file; do
+      files_to_process+=("$file")
+    done < <(find "$full_path" -type f)
+  elif [[ -f "$full_path" ]]; then
+    files_to_process+=("$full_path")
+  fi
+done < "$config_file"
+
+echo -e "Concatenating:\n"
+for item in "${files_to_process[@]}"; do
+  echo "${item}"
+done
+
+{
+  echo "" > "$target"
+  for file in "${files_to_process[@]}"; do
+    echo "-- $file"
+    cat "$file"
+    echo ""
+  done
+} > "$target"
