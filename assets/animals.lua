@@ -407,7 +407,7 @@ local base_animals_list = {
   },
   {
     name = "Spider",
-    emoji = "🕷️",
+    emoji = "🕷️ ",
     environment = "ground",
     speed = 2,  -- km/h
     attack_base = 0.08,  -- Venomous bite
@@ -621,7 +621,7 @@ local base_animals_list = {
   },
   {
     name = "Polar Bear",
-    emoji = "🐻‍❄️",
+    emoji = "🐻‍❄️ ",
     environment = "ground",
     speed = 40,  -- km/h
     attack_base = 0.15,
@@ -965,7 +965,7 @@ local base_animals_list = {
   },
   {
     name = "Tarantula",
-    emoji = "🕷️",
+    emoji = "🕷️ ",
     environment = "ground",
     speed = 1.5,  -- km/h
     attack_base = 0.07,  -- Venomous bite

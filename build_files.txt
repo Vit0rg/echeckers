@@ -1,3 +1,4 @@
+configuration.lua
 assets/animals.lua
 assets/biomes.lua
 functions/random_deck_generator.lua
@@ -7,5 +8,6 @@ utils/table.print.lua
 utils/string.split.lua
 utils/string.center.lua
 ui/functions/update_board.lua
+ui/functions/update_hand.lua
 phases/0_setup.lua
 duel.lua

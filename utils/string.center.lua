@@ -1,9 +1,12 @@
 -- Center text within given visual width (emoji = 2 chars)
 string.center = function(s, width)
+    -- Remove trailing space if present (for emoji padding)
+    local trimmed = s:gsub(' $', '')
+    
     local vlen = 0
     local i = 1
-    while i <= #s do
-        local b1 = string.byte(s, i)
+    while i <= #trimmed do
+        local b1 = string.byte(trimmed, i)
         if b1 < 128 then
             vlen = vlen + 1
             i = i + 1
@@ -17,10 +20,10 @@ string.center = function(s, width)
             else char_bytes = 1 end
             -- Skip variation selector
             local next_i = i + char_bytes
-            if next_i + 2 <= #s then
-                local b2, b3 = string.byte(s, next_i, next_i + 1)
+            if next_i + 2 <= #trimmed then
+                local b2, b3 = string.byte(trimmed, next_i, next_i + 1)
                 if b2 == 239 and b3 == 184 then
-                    local b4 = string.byte(s, next_i + 2)
+                    local b4 = string.byte(trimmed, next_i + 2)
                     if b4 >= 128 and b4 <= 143 then
                         next_i = next_i + 3
                     end
@@ -35,5 +38,5 @@ string.center = function(s, width)
     if pad < 0 then pad = 0 end
     local left_pad = math.ceil(pad / 2)
     local right_pad = pad - left_pad
-    return string.rep(' ', left_pad) .. s .. string.rep(' ', right_pad)
+    return string.rep(' ', left_pad) .. trimmed .. string.rep(' ', right_pad)
 end

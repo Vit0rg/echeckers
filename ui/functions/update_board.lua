@@ -1,6 +1,6 @@
 BUILD = 'TUI'
 
-local update_board = function (board)
+UI.update_board = function (board)
     if BUILD == 'TUI' then
         -- 5x5 grid, width 61
         -- Layout: ||cell1|cell2|cell3||cell4|cell5||
@@ -72,6 +72,6 @@ local update_board = function (board)
         lines_n = lines_n + 1
         lines[lines_n] = border
 
-        return table.concat(lines, '\n')
+        return print(table.concat(lines, '\n'))
     end
 end

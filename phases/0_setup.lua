@@ -15,9 +15,9 @@ local function _setup_biomes()
     ]]
 end
 
-local function _setup_decks()   
-    local deck_p1 = generate_random_deck()
-    local deck_p2 = generate_random_deck()
+local function _setup_decks()
+    Deck_p1 = generate_random_deck()
+    Deck_p2 = generate_random_deck()
     --[[
     print('DECK 1:\n')
     table.print(deck_p1, 'v')
@@ -34,23 +34,33 @@ end
 
 local function _setup_board(mode)
     if mode == 'basic' then
-        local board = {}
+        Board = {}
 
-        board[1] = {Biomes_p2[1].emoji, Biomes_p2[2].emoji, Biomes_p2[3].emoji, '🂠', '⛼'}
-        board[2] = {'', '', '', LIFE, 'Player 2'}
-        board[3] = {'', 'SETUP', '','' , ''}
-        board[4] = {'', '', '', LIFE, 'Player 1'}
-        board[5] = {Biomes_p1[1].emoji, Biomes_p1[2].emoji, Biomes_p1[3].emoji, '🂠', '⛼'}
-
-        print(update_board(board))
+        Board[1] = {Biomes_p2[1].emoji, Biomes_p2[2].emoji, Biomes_p2[3].emoji, '🂠', '⛼'}
+        Board[2] = {'', '', '', LIFE, 'Player 2'}
+        Board[3] = {'', 'SETUP', '','' , ''}
+        Board[4] = {'', '', '', LIFE, 'Player 1'}
+        Board[5] = {Biomes_p1[1].emoji, Biomes_p1[2].emoji, Biomes_p1[3].emoji, '🂠', '⛼'}
     end
 end
 
-local function _setup_hand()
+local function _setup_hands()
+    if MODE == 'basic' then
+        Hands = {true, true}
+        Hands[1] = {Deck_p1[1].emoji, Deck_p1[2].emoji, Deck_p1[3].emoji}
+        Hands[2] = {Deck_p2[1].emoji, Deck_p2[2].emoji, Deck_p2[3].emoji}
+    end
     return
 end
 
--- @1: mode(string) 
+local function _setup_ui()
+    -- Each player should not see the other hand
+    UI.update_hand(Hands[2], 'hidden')
+    UI.update_board(Board)
+    UI.update_hand(Hands[1])
+end
+
+-- @1: mode(string)
 local function setup(...)
     local args = {...}
     local mode = args[1] or 'basic'
@@ -59,13 +69,11 @@ local function setup(...)
         _setup_biomes()
         _setup_decks()
         _setup_board(mode)
+        _setup_hands()
+        _setup_ui()
     end
 
     if mode == 'elemental' then
-        _setup_biomes()
-        _setup_items()
-        _setup_decks()
-        _setup_board()
         return
     end
 

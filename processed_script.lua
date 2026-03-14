@@ -1,3 +1,7 @@
+-- ./configuration.lua
+BUILD = 'TUI'
+MODE = 'basic'
+UI = {}
 -- ./assets/animals.lua
 -- local animals = {}
 
@@ -408,7 +412,7 @@ local base_animals_list = {
   },
   {
     name = "Spider",
-    emoji = "🕷️",
+    emoji = "🕷️ ",
     environment = "ground",
     speed = 2,  -- km/h
     attack_base = 0.08,  -- Venomous bite
@@ -622,7 +626,7 @@ local base_animals_list = {
   },
   {
     name = "Polar Bear",
-    emoji = "🐻‍❄️",
+    emoji = "🐻‍❄️ ",
     environment = "ground",
     speed = 40,  -- km/h
     attack_base = 0.15,
@@ -966,7 +970,7 @@ local base_animals_list = {
   },
   {
     name = "Tarantula",
-    emoji = "🕷️",
+    emoji = "🕷️ ",
     environment = "ground",
     speed = 1.5,  -- km/h
     attack_base = 0.07,  -- Venomous bite
@@ -1328,10 +1332,13 @@ end
 -- ./utils/string.center.lua
 -- Center text within given visual width (emoji = 2 chars)
 string.center = function(s, width)
+    -- Remove trailing space if present (for emoji padding)
+    local trimmed = s:gsub(' $', '')
+    
     local vlen = 0
     local i = 1
-    while i <= #s do
-        local b1 = string.byte(s, i)
+    while i <= #trimmed do
+        local b1 = string.byte(trimmed, i)
         if b1 < 128 then
             vlen = vlen + 1
             i = i + 1
@@ -1345,10 +1352,10 @@ string.center = function(s, width)
             else char_bytes = 1 end
             -- Skip variation selector
             local next_i = i + char_bytes
-            if next_i + 2 <= #s then
-                local b2, b3 = string.byte(s, next_i, next_i + 1)
+            if next_i + 2 <= #trimmed then
+                local b2, b3 = string.byte(trimmed, next_i, next_i + 1)
                 if b2 == 239 and b3 == 184 then
-                    local b4 = string.byte(s, next_i + 2)
+                    local b4 = string.byte(trimmed, next_i + 2)
                     if b4 >= 128 and b4 <= 143 then
                         next_i = next_i + 3
                     end
@@ -1363,13 +1370,13 @@ string.center = function(s, width)
     if pad < 0 then pad = 0 end
     local left_pad = math.ceil(pad / 2)
     local right_pad = pad - left_pad
-    return string.rep(' ', left_pad) .. s .. string.rep(' ', right_pad)
+    return string.rep(' ', left_pad) .. trimmed .. string.rep(' ', right_pad)
 end
 
 -- ./ui/functions/update_board.lua
 BUILD = 'TUI'
 
-local update_board = function (board)
+UI.update_board = function (board)
     if BUILD == 'TUI' then
         -- 5x5 grid, width 61
         -- Layout: ||cell1|cell2|cell3||cell4|cell5||
@@ -1441,7 +1448,36 @@ local update_board = function (board)
         lines_n = lines_n + 1
         lines[lines_n] = border
 
-        return table.concat(lines, '\n')
+        return print(table.concat(lines, '\n'))
+    end
+end
+-- ./ui/functions/update_hand.lua
+---@diagnostic disable: duplicate-set-field
+function _TUI_update_hand(hand, is_hidden)
+    local separator = '  '
+
+    if is_hidden == "hidden" then
+        local output = ''
+        for i = 1, #hand do
+            if i > 1 then output = output .. separator end
+            output = output .. '🂠'
+        end
+        print(output)
+        return
+    end
+
+    -- Print hand (padding already in emoji data)
+    local output = ''
+    for i = 1, #hand do
+        if i > 1 then output = output .. separator end
+        output = output .. hand[i]
+    end
+    print(output)
+end
+
+UI.update_hand = function(hand, is_hidden)
+    if BUILD == 'TUI' then
+        _TUI_update_hand(hand, is_hidden)
     end
 end
 -- ./phases/0_setup.lua
@@ -1462,9 +1498,9 @@ local function _setup_biomes()
     ]]
 end
 
-local function _setup_decks()   
-    local deck_p1 = generate_random_deck()
-    local deck_p2 = generate_random_deck()
+local function _setup_decks()
+    Deck_p1 = generate_random_deck()
+    Deck_p2 = generate_random_deck()
     --[[
     print('DECK 1:\n')
     table.print(deck_p1, 'v')
@@ -1481,23 +1517,33 @@ end
 
 local function _setup_board(mode)
     if mode == 'basic' then
-        local board = {}
+        Board = {}
 
-        board[1] = {Biomes_p2[1].emoji, Biomes_p2[2].emoji, Biomes_p2[3].emoji, '🂠', '⛼'}
-        board[2] = {'', '', '', LIFE, 'Player 2'}
-        board[3] = {'', 'SETUP', '','' , ''}
-        board[4] = {'', '', '', LIFE, 'Player 1'}
-        board[5] = {Biomes_p1[1].emoji, Biomes_p1[2].emoji, Biomes_p1[3].emoji, '🂠', '⛼'}
-
-        print(update_board(board))
+        Board[1] = {Biomes_p2[1].emoji, Biomes_p2[2].emoji, Biomes_p2[3].emoji, '🂠', '⛼'}
+        Board[2] = {'', '', '', LIFE, 'Player 2'}
+        Board[3] = {'', 'SETUP', '','' , ''}
+        Board[4] = {'', '', '', LIFE, 'Player 1'}
+        Board[5] = {Biomes_p1[1].emoji, Biomes_p1[2].emoji, Biomes_p1[3].emoji, '🂠', '⛼'}
     end
 end
 
-local function _setup_hand()
+local function _setup_hands()
+    if MODE == 'basic' then
+        Hands = {true, true}
+        Hands[1] = {Deck_p1[1].emoji, Deck_p1[2].emoji, Deck_p1[3].emoji}
+        Hands[2] = {Deck_p2[1].emoji, Deck_p2[2].emoji, Deck_p2[3].emoji}
+    end
     return
 end
 
--- @1: mode(string) 
+local function _setup_ui()
+    -- Each player should not see the other hand
+    UI.update_hand(Hands[2], 'hidden')
+    UI.update_board(Board)
+    UI.update_hand(Hands[1])
+end
+
+-- @1: mode(string)
 local function setup(...)
     local args = {...}
     local mode = args[1] or 'basic'
@@ -1506,6 +1552,8 @@ local function setup(...)
         _setup_biomes()
         _setup_decks()
         _setup_board(mode)
+        _setup_hands()
+        _setup_ui()
     end
 
     if mode == 'elemental' then
