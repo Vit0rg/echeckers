@@ -76,4 +76,5 @@ table.print = function(...)
     end
 
     print_table_recursive(obj, 0, visited)
+    print()
 end

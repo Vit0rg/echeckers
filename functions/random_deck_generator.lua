@@ -3,7 +3,7 @@ local random = math.random
 
 local function generate_random_deck()
     local deck = {}
-    local deck_size = 40
+    local deck_size = 10
 
     local index
     for i=1, deck_size do
