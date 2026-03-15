@@ -5,8 +5,9 @@ The rest should be unloaded
 ]]
 
 local function _setup_biomes()
-    Biomes_p1 = get_random_biomes()
-    Biomes_p2 = get_random_biomes()
+    Biomes = {}
+    Biomes[1] = get_random_biomes()
+    Biomes[2] = get_random_biomes()
     --[[
     print('BIOMES 1:\n')
     table.print(Biomes_p1, 'v')
@@ -16,8 +17,9 @@ local function _setup_biomes()
 end
 
 local function _setup_decks()
-    Deck_p1 = generate_random_deck()
-    Deck_p2 = generate_random_deck()
+    Decks={true,true}
+    Decks[1] = generate_random_deck()
+    Decks[2] = generate_random_deck()
     --[[
     print('DECK 1:\n')
     table.print(deck_p1, 'v')
@@ -30,27 +32,46 @@ local function _setup_items()
     return
 end
 
--- Board should be global
 
-local function _setup_board(mode)
-    if mode == 'basic' then
+local function _setup_starter()
+    if tonumber(math.random(1, 2)) == 1 then
+        UI.display('Player 1 goes 1st')
+        Player_turn=1
+        return
+    end
+
+    UI.display('Player 2 goes 1st')
+    Player_turn=2
+end
+
+
+-- Board should be global
+local function _setup_board(MODE)
+    if MODE == 'basic' then
         Board = {}
 
-        Board[1] = {Biomes_p2[1].emoji, Biomes_p2[2].emoji, Biomes_p2[3].emoji, '🂠', '⛼'}
+        Board[1] = {Biomes[2][1], Biomes[2][2], Biomes[2][3], 'Deck', 'Trash'}
         Board[2] = {'', '', '', LIFE, 'Player 2'}
         Board[3] = {'', 'SETUP', '','' , ''}
         Board[4] = {'', '', '', LIFE, 'Player 1'}
-        Board[5] = {Biomes_p1[1].emoji, Biomes_p1[2].emoji, Biomes_p1[3].emoji, '🂠', '⛼'}
+        Board[5] = {Biomes[1][1], Biomes[1][2], Biomes[1][3], 'Deck', 'Trash'}
     end
 end
 
 local function _setup_hands()
     if MODE == 'basic' then
-        Hands = {true, true}
-        Hands[1] = {Deck_p1[1].emoji, Deck_p1[2].emoji, Deck_p1[3].emoji}
-        Hands[2] = {Deck_p2[1].emoji, Deck_p2[2].emoji, Deck_p2[3].emoji}
+        Hands = {}
+        Hands[1] = {}
+        Hands[2] = {}
+        local saved_turn = Player_turn
+        for i = 1, 2 do
+            Player_turn = i
+            for j = 1, 3 do
+                _draw_card()
+            end
+        end
+        Player_turn = saved_turn
     end
-    return
 end
 
 local function _setup_ui()
@@ -60,24 +81,27 @@ local function _setup_ui()
     UI.update_hand(Hands[1])
 end
 
--- @1: mode(string)
-local function setup(...)
-    local args = {...}
-    local mode = args[1] or 'basic'
-
-    if mode == 'basic' then
+local _setup_trash = function ()
+    Trashs = {true, true}
+    Trashs[1] = {}
+    Trashs[2] = {}
+end
+-- @1: MODE(string)
+local function setup()
+    if MODE == 'basic' then
         _setup_biomes()
         _setup_decks()
-        _setup_board(mode)
+        _setup_starter()
+        _setup_board(MODE)
         _setup_hands()
         _setup_ui()
     end
 
-    if mode == 'elemental' then
+    if MODE == 'elemental' then
         return
     end
 
-    if mode == 'advanced' then
+    if MODE == 'advanced' then
         return
     end
 

@@ -1047,7 +1047,7 @@ local base_animals_list = {
   },
   {
     name = "Dodo",
-    emoji = "🦤",
+    emoji = "🦤 ",
     environment = "air",
     speed = 10,  -- km/h
     attack_base = 0.01,

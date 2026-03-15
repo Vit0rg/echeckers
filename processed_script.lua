@@ -2,6 +2,7 @@
 BUILD = 'TUI'
 MODE = 'basic'
 UI = {}
+math.randomseed(os.time())
 -- ./assets/animals.lua
 -- local animals = {}
 
@@ -1052,7 +1053,7 @@ local base_animals_list = {
   },
   {
     name = "Dodo",
-    emoji = "🦤",
+    emoji = "🦤 ",
     environment = "air",
     speed = 10,  -- km/h
     attack_base = 0.01,
@@ -1109,49 +1110,41 @@ local animals = base_animals_list
 local biomes = {
     [1] = {
         name = 'Desert',
-        emoji = '🏜️',
         color = '#dddd00',
         effect = '-5% speed [ground] [enemy]'
     },
     [2] = {
         name = 'Forest',
-        emoji = '🌲',
         color = '#228B22',
         effect = '+5% defense [ground]'
     },
     [3] = {
         name = 'Mountain',
-        emoji = '⛰️',
         color = '#808080',
         effect = '+5% attack [air]'
     },
     [4] = {
         name = 'Ocean',
-        emoji = '🌊',
         color = '#0000FF',
         effect = '+5% attack [water]'
     },
     [5] = {
         name = 'Tundra',
-        emoji = '❄️',
         color = '#ADD8E6',
         effect = '-5% speed [enemy]'
     },
     [6] = {
         name = 'Swamp',
-        emoji = '🐊',
         color = '#556B2F',
         effect = '+5% defense [water]'
     },
     [7] = {
         name = 'Volcano',
-        emoji = '🌋',
-        color = '#FF4500',
+        color = 'FF551700',
         effect = '-5% defense [ground]'
     },
     [8] = {
         name = 'Jungle',
-        emoji = '🌴',
         color = '#32CD32',
         effect = '+5% heal'
     }
@@ -1169,15 +1162,13 @@ local implemented_biomes = {
 }
 
 -- ./functions/random_deck_generator.lua
-math.randomseed(1)
 local random = math.random
 
 local function generate_random_deck()
     local deck = {}
-    local deck_size = 10
 
     local index
-    for i=1, deck_size do
+    for i=1, DECK_SIZE do
         index = random(1, #animals)
         deck[i] = animals[index]
     end
@@ -1187,7 +1178,6 @@ end
 
 
 -- ./functions/get_random_biomes.lua
-math.randomseed(1)
 local random = math.random
 
 local function get_random_biomes()
@@ -1203,88 +1193,101 @@ local function get_random_biomes()
     return _selected_biomes
 end
 -- ./modes/basic.lua
-LIFE = '2000'
+LIFE = 2000
+MAX_TURNS = 20
+DECK_SIZE = 10
+HAND_LIMIT = DECK_SIZE/2
 -- ./utils/table.print.lua
--- @4: obj, mode, max_depth, visited
+local function _process_element(k, v, mode, separator, _print_table_recursive_fn, current_depth, current_visited, output, max_depth)
+    -- Define behavior based on value type and mode
+    local behaviors = {
+        k = { table_func = function() output = output .. tostring(k) end, non_table_func = function() output = output .. tostring(k) end },
+        v = { table_func = function() output = _print_table_recursive_fn(v, current_depth + 1, current_visited, mode, separator, max_depth, output) end, non_table_func = function() output = output .. tostring(v) end },
+        kv = { table_func = function() output = output .. tostring(k) .. ":"; output = _print_table_recursive_fn(v, current_depth + 1, current_visited, mode, separator, max_depth, output) end, non_table_func = function() output = output .. tostring(k) .. ": " .. tostring(v) end }
+    }
+
+    local behavior = behaviors[mode] or behaviors.kv
+    local value_type = type(v) == "table" and "table_func" or "non_table_func"
+    behavior[value_type]()
+    return output
+end
+
+local function _print_table_recursive(current_obj, current_depth, current_visited, mode, separator, max_depth, output)
+    if current_depth >= max_depth then
+        return output .. "<maximum depth reached>"
+    end
+
+    if current_visited[current_obj] then
+        return output .. "<circular reference detected>"
+    end
+
+    current_visited[current_obj] = true
+
+    -- Process all keys using ipairs for array part and a manual approach for hash part
+    -- Array part: indices 1 to #current_obj
+    for i = 1, #current_obj do
+        output = _process_element(i, current_obj[i], mode, separator, _print_table_recursive, current_depth, current_visited, output, max_depth)
+        if separator ~= "" then
+            output = output .. separator
+        end
+    end
+
+    -- Note: Accessing hash keys in Lua tables requires some form of iteration
+    -- Using rawget with known keys would require knowing keys in advance
+    -- The following is the most direct way to access non-array keys without pairs
+    local key_map = {}
+
+    -- Use next to collect all keys first
+    local iter_key = nil
+    repeat
+        local k, v = next(current_obj, iter_key)
+        iter_key = k
+        if k ~= nil then
+            local is_array_index = type(k) == "number" and k >= 1
+                                    and k <= #current_obj and math.floor(k) == k
+            if not is_array_index then
+                key_map[k] = v  -- Store only non-array keys
+            end
+        end
+    until iter_key == nil
+
+    -- Then process only non-array keys using next
+    local map_key = nil
+    repeat
+        local k, v = next(key_map, map_key)
+        map_key = k
+        if k ~= nil then
+            output = _process_element(k, v, mode, separator, _print_table_recursive, current_depth, current_visited, output, max_depth)
+            if separator ~= "" then
+                output = output .. separator
+            end
+        end
+    until map_key == nil
+
+    current_visited[current_obj] = nil
+    return output
+end
+
+-- @5: obj, mode, max_depth, visited, separator
 table.print = function(...)
     local args = {...}
     local obj = args[1]
     local mode = args[2] or "v"
     local max_depth = args[3] or 10
     local visited = args[4] or {}
+    local separator = args[5] or ""
 
     if type(obj) ~= "table" then
         error("First argument must be a table")
     end
 
-    local function print_table_recursive(current_obj, current_depth, current_visited)
-        if current_depth >= max_depth then
-            print("<maximum depth reached>")
-            return
-        end
+    local output = ""
 
-        if current_visited[current_obj] then
-            print("<circular reference detected>")
-            return
-        end
+    output = _print_table_recursive(obj, 0, visited, mode, separator, max_depth, output)
 
-        current_visited[current_obj] = true
-
-        -- Process all elements in a single loop
-        local function process_element(k, v)
-            -- Define behavior based on value type and mode
-            local behaviors = {
-                k = { table_func = function() print(tostring(k)) end, non_table_func = function() print(tostring(k)) end },
-                v = { table_func = function() print_table_recursive(v, current_depth + 1, current_visited) end, non_table_func = function() print(tostring(v)) end },
-                kv = { table_func = function() print(tostring(k) .. ":"); print_table_recursive(v, current_depth + 1, current_visited) end, non_table_func = function() print(tostring(k) .. ": " .. tostring(v)) end }
-            }
-
-            local behavior = behaviors[mode] or behaviors.kv
-            local value_type = type(v) == "table" and "table_func" or "non_table_func"
-            behavior[value_type]()
-        end
-
-        -- Process all keys using ipairs for array part and a manual approach for hash part
-        -- Array part: indices 1 to #current_obj
-        for i = 1, #current_obj do
-            process_element(i, current_obj[i])
-        end
-
-        -- Note: Accessing hash keys in Lua tables requires some form of iteration
-        -- Using rawget with known keys would require knowing keys in advance
-        -- The following is the most direct way to access non-array keys without pairs
-        local key_map = {}
-
-        -- Use next to collect all keys first
-        local iter_key = nil
-        repeat
-            local k, v = next(current_obj, iter_key)
-            iter_key = k
-            if k ~= nil then
-                local is_array_index = type(k) == "number" and k >= 1
-                                        and k <= #current_obj and math.floor(k) == k
-                if not is_array_index then
-                    key_map[k] = v  -- Store only non-array keys
-                end
-            end
-        until iter_key == nil
-
-        -- Then process only non-array keys using next
-        local map_key = nil
-        repeat
-            local k, v = next(key_map, map_key)
-            map_key = k
-            if k ~= nil then
-                process_element(k, v)
-            end
-        until map_key == nil
-
-        current_visited[current_obj] = nil
-    end
-
-    print_table_recursive(obj, 0, visited)
-    print()
+    print(output)
 end
+
 -- ./utils/string.split.lua
 string.split = function(value, sep, f)
 	if sep == nil or sep == "" then
@@ -1332,9 +1335,11 @@ end
 -- ./utils/string.center.lua
 -- Center text within given visual width (emoji = 2 chars)
 string.center = function(s, width)
+    -- Convert numbers to strings
+    s = tostring(s)
     -- Remove trailing space if present (for emoji padding)
     local trimmed = s:gsub(' $', '')
-    
+
     local vlen = 0
     local i = 1
     while i <= #trimmed do
@@ -1373,85 +1378,172 @@ string.center = function(s, width)
     return string.rep(' ', left_pad) .. trimmed .. string.rep(' ', right_pad)
 end
 
--- ./ui/functions/update_board.lua
-BUILD = 'TUI'
+-- ./ui/functions/UI.display.lua
+-- @2, 
+_TUI_display = function(message, separator)
+    separator = separator or ''
+    if type(message) == "table" then
+        table.print(message,false,false,false,false,separator)
+        return
+    end
 
-UI.update_board = function (board)
+    print(message)
+end
+
+UI.display = function(message, separator)
     if BUILD == 'TUI' then
-        -- 5x5 grid, width 61
-        -- Layout: ||cell1|cell2|cell3||cell4|cell5||
-        -- Separators: 2+1+1+2+1+2 = 9 chars
-        -- Cells: 61 - 9 = 52 chars
-        -- Cells 1-3: 10 chars each (5 emojis × 2 visual chars) = 30 chars
-        -- Cell 4: 4 + content + 4 = variable
-        -- Cell 5: 13 chars
-
-        local x_size = #board
-        local cell_sizes = {10, 10, 10, 10, 13}
-        local border = string.rep('-', 61)
-        local is_edge_row = (board[1] and board[x_size]) -- true if rows 1 and 5 exist
-
-        local lines = {}
-        local lines_n = 0
-
-        for i = 1, x_size do
-            local is_first_or_last = (i == 1 or i == 5)
-            local row_cells = board[i]
-
-            -- Build row string directly
-            local line = '||'
-
-            for c = 1, 5 do
-                local cell = row_cells[c]
-                local cell_size = cell_sizes[c]
-
-                -- Inline is_emoji check: first byte >= 192
-                local is_emoji_cell = #cell > 0 and string.byte(cell, 1) >= 192
-                local should_fill = is_edge_row and is_first_or_last and (c <= 3) and is_emoji_cell
-
-                local content
-                if should_fill then
-                    content = string.center(string.rep(cell, 5), cell_size)
-                else
-                    content = string.center(cell, cell_size)
-                end
-
-                -- Add prefix/suffix for cells 4 and 5 on edge rows
-                if is_first_or_last then
-                    if c == 5 then
-                        content = content .. ' '
-                    end
-                end
-
-                -- Remove 1 trailing space from cell 5 on rows 2, 3 and 4
-                if (i >= 2 and i <= 4) and c == 5 then
-                    content = content:sub(1, -2)
-                end
-
-                line = line .. content
-
-                -- Separators: | after 1,2,4 | after 3 ||
-                if c == 1 or c == 2 or c == 4 then
-                    line = line .. '|'
-                elseif c == 3 then
-                    line = line .. '||'
-                end
-            end
-
-            line = line .. '||'
-
-            lines_n = lines_n + 1
-            lines[lines_n] = border
-            lines_n = lines_n + 1
-            lines[lines_n] = line
-        end
-        lines_n = lines_n + 1
-        lines[lines_n] = border
-
-        return print(table.concat(lines, '\n'))
+        _TUI_display(message, separator)
     end
 end
--- ./ui/functions/update_hand.lua
+-- ./ui/functions/UI.update_board.lua
+--- Convert hex color to RGB values
+---@param hex string Hex color string (e.g., '#dddd00' or 'FF551700')
+---@return number r, number g, number b
+local function hex_to_rgb(hex)
+    hex = hex:gsub('^#', '')
+    if #hex == 8 then
+        hex = hex:sub(3)  -- ARGB format
+    end
+    local r = tonumber(hex:sub(1, 2), 16) or 0
+    local g = tonumber(hex:sub(3, 4), 16) or 0
+    local b = tonumber(hex:sub(5, 6), 16) or 0
+    return r, g, b
+end
+
+--- Convert RGB to ANSI 256-color code
+---@param r number Red (0-255)
+---@param g number Green (0-255)
+---@param b number Blue (0-255)
+---@return number ANSI color code (0-255)
+local function rgb_to_ansi256(r, g, b)
+    local r6 = math.floor((r / 256) * 6)
+    local g6 = math.floor((g / 256) * 6)
+    local b6 = math.floor((b / 256) * 6)
+    return 16 + (r6 * 36) + (g6 * 6) + b6
+end
+
+--- Build ANSI escape sequences from color code
+---@param color number|string ANSI code (0-255) or hex string
+---@return string bg_ansi, string fg_ansi
+local function build_cell_colors(color)
+    local bg_ansi
+    if type(color) == 'number' then
+        bg_ansi = '\27[48;5;' .. color .. 'm'
+    else
+        local r, g, b = hex_to_rgb(color)
+        local code = rgb_to_ansi256(r, g, b)
+        bg_ansi = '\27[48;5;' .. code .. 'm'
+    end
+    return bg_ansi, '\27[38;5;15m'
+end
+
+--- Render board with styling
+local function render_board(board)
+    local ANSI_RESET = '\27[0m'
+    local GREY_ROW3 = 235
+    local GREY_DARK = 234
+    local CELL_SIZES = {12, 12, 12, 14, 14}
+
+    -- Cell color configuration: CELL_COLORS[row][col] = color_code
+    local CELL_COLORS = {
+        [1] = {nil, nil, nil, GREY_DARK, GREY_DARK},
+        [2] = {nil, nil, nil, GREY_DARK, GREY_DARK},
+        [3] = {GREY_ROW3, GREY_ROW3, GREY_ROW3, GREY_DARK, GREY_DARK},
+        [4] = {nil, nil, nil, GREY_DARK, GREY_DARK},
+        [5] = {nil, nil, nil, GREY_DARK, GREY_DARK},
+    }
+
+    local function get_cell_color(row, col)
+        return CELL_COLORS[row] and CELL_COLORS[row][col]
+    end
+
+    local function get_biome_data(row, col)
+        if col > 3 then
+            return nil
+        end
+        local biome_map = {
+            [1] = Biomes[2],
+            [2] = Biomes[2],
+            [4] = Biomes[1],
+            [5] = Biomes[1],
+        }
+        local biome = biome_map[row]
+        if biome and biome[col] then
+            return biome[col]
+        end
+        return nil
+    end
+
+    local function render_cell(row, col, cell_content, biome_data)
+        local cell_size = CELL_SIZES[col]
+        local bg_ansi, fg_ansi, text
+
+        if biome_data and biome_data.color then
+            bg_ansi, fg_ansi = build_cell_colors(biome_data.color)
+            text = string.center(biome_data.name or cell_content, cell_size)
+        else
+            local color = get_cell_color(row, col)
+            if color then
+                bg_ansi, fg_ansi = build_cell_colors(color)
+            end
+            text = string.center(cell_content, cell_size)
+        end
+
+        if bg_ansi and fg_ansi then
+            return bg_ansi .. fg_ansi .. text .. ANSI_RESET
+        end
+        return text
+    end
+
+    local function render_separator(bg_ansi, fg_ansi)
+        return bg_ansi .. fg_ansi .. ' ' .. ANSI_RESET
+    end
+
+    local lines = {}
+    local lines_n = 0
+
+    local board_width = 2
+    for i = 1, #CELL_SIZES do
+        board_width = board_width + CELL_SIZES[i]
+    end
+
+    local sep_bg, sep_fg = build_cell_colors(GREY_ROW3)
+
+    lines_n = lines_n + 1
+    lines[lines_n] = sep_bg .. sep_fg .. string.rep(' ', board_width) .. ANSI_RESET
+
+    for row = 1, #board do
+        local line = ''
+        local row_cells = board[row]
+
+        line = line .. render_separator(sep_bg, sep_fg)
+
+        for col = 1, 5 do
+            local cell = row_cells[col]
+            local biome_data = get_biome_data(row, col)
+            line = line .. render_cell(row, col, cell, biome_data)
+        end
+
+        line = line .. render_separator(sep_bg, sep_fg)
+
+        lines_n = lines_n + 1
+        lines[lines_n] = line
+    end
+
+    lines_n = lines_n + 1
+    lines[lines_n] = lines[1]
+
+    print('\n' .. table.concat(lines, '\n') .. '\n')
+end
+
+---@diagnostic disable-next-line: duplicate-set-field
+UI.update_board = function (board)
+    if BUILD == 'TUI' then
+        render_board(board)
+    end
+end
+
+-- ./ui/functions/UI.update_hand.lua
 ---@diagnostic disable: duplicate-set-field
 function _TUI_update_hand(hand, is_hidden)
     local separator = '  '
@@ -1470,7 +1562,11 @@ function _TUI_update_hand(hand, is_hidden)
     local output = ''
     for i = 1, #hand do
         if i > 1 then output = output .. separator end
-        output = output .. hand[i]
+        if hand[i].emoji then
+            output = output .. hand[i].emoji
+        else
+            output = output .. '❓'  -- Fallback for cards without emoji
+        end
     end
     print(output)
 end
@@ -1478,6 +1574,31 @@ end
 UI.update_hand = function(hand, is_hidden)
     if BUILD == 'TUI' then
         _TUI_update_hand(hand, is_hidden)
+    end
+end
+-- ./functions/draw_card.lua
+local _draw_card = function()
+    local i = Player_turn
+    local card_to_draw = nil
+    local idx = 1
+    local deck_size = #Decks[i]
+
+    if deck_size > 0 then
+        card_to_draw = Decks[i][idx]
+        -- O(1) removal: swap with last element instead of shifting
+        Decks[i][idx] = Decks[i][deck_size]
+        Decks[i][deck_size] = nil
+    end
+
+    if card_to_draw then
+        if card_to_draw.emoji == nil then
+            UI.display("Error: Card has no emoji!")
+            return
+        end
+        Hands[i][(#Hands[i])+1] = card_to_draw
+    else
+        UI.display("No cards left to draw!")
+        return
     end
 end
 -- ./phases/0_setup.lua
@@ -1488,8 +1609,9 @@ The rest should be unloaded
 ]]
 
 local function _setup_biomes()
-    Biomes_p1 = get_random_biomes()
-    Biomes_p2 = get_random_biomes()
+    Biomes = {}
+    Biomes[1] = get_random_biomes()
+    Biomes[2] = get_random_biomes()
     --[[
     print('BIOMES 1:\n')
     table.print(Biomes_p1, 'v')
@@ -1499,8 +1621,9 @@ local function _setup_biomes()
 end
 
 local function _setup_decks()
-    Deck_p1 = generate_random_deck()
-    Deck_p2 = generate_random_deck()
+    Decks={true,true}
+    Decks[1] = generate_random_deck()
+    Decks[2] = generate_random_deck()
     --[[
     print('DECK 1:\n')
     table.print(deck_p1, 'v')
@@ -1513,27 +1636,46 @@ local function _setup_items()
     return
 end
 
--- Board should be global
 
-local function _setup_board(mode)
-    if mode == 'basic' then
+local function _setup_starter()
+    if tonumber(math.random(1, 2)) == 1 then
+        UI.display('Player 1 goes 1st')
+        Player_turn=1
+        return
+    end
+
+    UI.display('Player 2 goes 1st')
+    Player_turn=2
+end
+
+
+-- Board should be global
+local function _setup_board(MODE)
+    if MODE == 'basic' then
         Board = {}
 
-        Board[1] = {Biomes_p2[1].emoji, Biomes_p2[2].emoji, Biomes_p2[3].emoji, '🂠', '⛼'}
+        Board[1] = {Biomes[2][1], Biomes[2][2], Biomes[2][3], 'Deck', 'Trash'}
         Board[2] = {'', '', '', LIFE, 'Player 2'}
         Board[3] = {'', 'SETUP', '','' , ''}
         Board[4] = {'', '', '', LIFE, 'Player 1'}
-        Board[5] = {Biomes_p1[1].emoji, Biomes_p1[2].emoji, Biomes_p1[3].emoji, '🂠', '⛼'}
+        Board[5] = {Biomes[1][1], Biomes[1][2], Biomes[1][3], 'Deck', 'Trash'}
     end
 end
 
 local function _setup_hands()
     if MODE == 'basic' then
-        Hands = {true, true}
-        Hands[1] = {Deck_p1[1].emoji, Deck_p1[2].emoji, Deck_p1[3].emoji}
-        Hands[2] = {Deck_p2[1].emoji, Deck_p2[2].emoji, Deck_p2[3].emoji}
+        Hands = {}
+        Hands[1] = {}
+        Hands[2] = {}
+        local saved_turn = Player_turn
+        for i = 1, 2 do
+            Player_turn = i
+            for j = 1, 3 do
+                _draw_card()
+            end
+        end
+        Player_turn = saved_turn
     end
-    return
 end
 
 local function _setup_ui()
@@ -1543,35 +1685,79 @@ local function _setup_ui()
     UI.update_hand(Hands[1])
 end
 
--- @1: mode(string)
-local function setup(...)
-    local args = {...}
-    local mode = args[1] or 'basic'
-
-    if mode == 'basic' then
+local _setup_trash = function ()
+    Trashs = {true, true}
+    Trashs[1] = {}
+    Trashs[2] = {}
+end
+-- @1: MODE(string)
+local function setup()
+    if MODE == 'basic' then
         _setup_biomes()
         _setup_decks()
-        _setup_board(mode)
+        _setup_starter()
+        _setup_board(MODE)
         _setup_hands()
         _setup_ui()
     end
 
-    if mode == 'elemental' then
-        _setup_biomes()
-        _setup_items()
-        _setup_decks()
-        _setup_board()
+    if MODE == 'elemental' then
         return
     end
 
-    if mode == 'advanced' then
+    if MODE == 'advanced' then
         return
     end
 
 end
--- ./duel.lua
+-- ./phases/1_draw_phase.lua
+local _update_ui = function ()
+    -- Each player should not see the other hand
+    UI.update_hand(Hands[2], 'hidden')
+    UI.update_board(Board)
+    UI.update_hand(Hands[1])
+end
+
+local _discard = function ()
+    
+end
+
+local _check_hand_size = function ()
+    if #Hands[Player_turn] > HAND_LIMIT then
+        UI.display("Discard one")
+        _discard()
+    end
+end
+
+draw = function ()
+    if MODE == 'basic' then
+        if #Decks[Player_turn] == 0 then
+            UI.display('No cards on deck, skipping')
+            return
+        end
+        _draw_card()
+        _update_ui()
+        return
+    end
+end
+-- ./battle.lua
 -- p1 join,
 -- p2 join
 
 -- select deck, biomes, items
-setup()
+-- Only occurs once per battle
+
+function start_battle()
+    UI.display('Setting up:')
+    setup()
+
+    for i=1, MAX_TURNS do
+        UI.display({'Turn: ', i})
+        UI.display({'Player turn: ', Player_turn})
+        UI.display('Phase: DRAW!')
+        draw()
+        print()
+    end
+end
+
+start_battle()

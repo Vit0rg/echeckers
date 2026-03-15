@@ -1,8 +1,10 @@
 -- Center text within given visual width (emoji = 2 chars)
 string.center = function(s, width)
+    -- Convert numbers to strings
+    s = tostring(s)
     -- Remove trailing space if present (for emoji padding)
     local trimmed = s:gsub(' $', '')
-    
+
     local vlen = 0
     local i = 1
     while i <= #trimmed do

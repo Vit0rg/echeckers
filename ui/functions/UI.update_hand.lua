@@ -16,7 +16,11 @@ function _TUI_update_hand(hand, is_hidden)
     local output = ''
     for i = 1, #hand do
         if i > 1 then output = output .. separator end
-        output = output .. hand[i]
+        if hand[i].emoji then
+            output = output .. hand[i].emoji
+        else
+            output = output .. '❓'  -- Fallback for cards without emoji
+        end
     end
     print(output)
 end

@@ -1,4 +1,3 @@
-math.randomseed(1)
 local random = math.random
 
 local function get_random_biomes()

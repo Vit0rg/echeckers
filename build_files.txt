@@ -7,7 +7,10 @@ modes/basic.lua
 utils/table.print.lua
 utils/string.split.lua
 utils/string.center.lua
-ui/functions/update_board.lua
-ui/functions/update_hand.lua
+ui/functions/UI.display.lua
+ui/functions/UI.update_board.lua
+ui/functions/UI.update_hand.lua
+functions/draw_card.lua
 phases/0_setup.lua
-duel.lua
+phases/1_draw_phase.lua
+battle.lua
