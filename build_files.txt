@@ -10,6 +10,7 @@ utils/string.center.lua
 ui/functions/UI.display.lua
 ui/functions/UI.update_board.lua
 ui/functions/UI.update_hand.lua
+functions/card_processor.lua
 functions/draw_card.lua
 phases/0_setup.lua
 phases/1_draw_phase.lua

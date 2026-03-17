@@ -34,7 +34,7 @@ end
 
 
 local function _setup_starter()
-    if tonumber(math.random(1, 2)) == 1 then
+    if math.random(1, 2) == 1 then
         UI.display('Player 1 goes 1st')
         Player_turn=1
         return
@@ -51,9 +51,9 @@ local function _setup_board(MODE)
         Board = {}
 
         Board[1] = {Biomes[2][1], Biomes[2][2], Biomes[2][3], 'Deck', 'Trash'}
-        Board[2] = {'', '', '', LIFE, 'Player 2'}
+        Board[2] = {'', '', '', LIFE, BIOMATTER}
         Board[3] = {'', 'SETUP', '','' , ''}
-        Board[4] = {'', '', '', LIFE, 'Player 1'}
+        Board[4] = {'', '', '', LIFE, BIOMATTER}
         Board[5] = {Biomes[1][1], Biomes[1][2], Biomes[1][3], 'Deck', 'Trash'}
     end
 end
@@ -63,14 +63,12 @@ local function _setup_hands()
         Hands = {}
         Hands[1] = {}
         Hands[2] = {}
-        local saved_turn = Player_turn
+
         for i = 1, 2 do
-            Player_turn = i
-            for j = 1, 3 do
-                _draw_card()
+            for j = 1, HAND_SIZE do
+                _draw_card(i)
             end
         end
-        Player_turn = saved_turn
     end
 end
 

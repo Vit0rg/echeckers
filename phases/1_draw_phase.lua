@@ -6,7 +6,7 @@ local _update_ui = function ()
 end
 
 local _discard = function ()
-    
+    return
 end
 
 local _check_hand_size = function ()
@@ -16,13 +16,9 @@ local _check_hand_size = function ()
     end
 end
 
-draw = function ()
+local draw = function ()
     if MODE == 'basic' then
-        if #Decks[Player_turn] == 0 then
-            UI.display('No cards on deck, skipping')
-            return
-        end
-        _draw_card()
+        _draw_card(Player_turn)
         _update_ui()
         return
     end

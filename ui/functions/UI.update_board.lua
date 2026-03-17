@@ -43,16 +43,20 @@ end
 local function render_board(board)
     local ANSI_RESET = '\27[0m'
     local GREY_ROW3 = 235
+    local DECK_COLOR = 238
     local GREY_DARK = 234
+    local BIOMATTER_COLOR = 226
+    local HEALTH_COLOR = 22
+    local TRASH_COLOR = 94
     local CELL_SIZES = {12, 12, 12, 14, 14}
 
     -- Cell color configuration: CELL_COLORS[row][col] = color_code
     local CELL_COLORS = {
-        [1] = {nil, nil, nil, GREY_DARK, GREY_DARK},
-        [2] = {nil, nil, nil, GREY_DARK, GREY_DARK},
+        [1] = {nil, nil, nil, DECK_COLOR, TRASH_COLOR},
+        [2] = {nil, nil, nil, HEALTH_COLOR, BIOMATTER_COLOR},
         [3] = {GREY_ROW3, GREY_ROW3, GREY_ROW3, GREY_DARK, GREY_DARK},
-        [4] = {nil, nil, nil, GREY_DARK, GREY_DARK},
-        [5] = {nil, nil, nil, GREY_DARK, GREY_DARK},
+        [4] = {nil, nil, nil, HEALTH_COLOR, BIOMATTER_COLOR},
+        [5] = {nil, nil, nil, DECK_COLOR, TRASH_COLOR},
     }
 
     local function get_cell_color(row, col)

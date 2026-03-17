@@ -16,7 +16,7 @@ local biomes = {
     },
     [4] = {
         name = 'Ocean',
-        color = '#0000FF',
+        color = '#4646FF',
         effect = '+5% attack [water]'
     },
     [5] = {
