@@ -1,143 +1,188 @@
---- Convert hex color to RGB values
----@param hex string Hex color string (e.g., '#dddd00' or 'FF551700')
----@return number r, number g, number b
-local function hex_to_rgb(hex)
-    hex = hex:gsub('^#', '')
-    if #hex == 8 then
-        hex = hex:sub(3)  -- ARGB format
-    end
-    local r = tonumber(hex:sub(1, 2), 16) or 0
-    local g = tonumber(hex:sub(3, 4), 16) or 0
-    local b = tonumber(hex:sub(5, 6), 16) or 0
-    return r, g, b
-end
-
---- Convert RGB to ANSI 256-color code
----@param r number Red (0-255)
----@param g number Green (0-255)
----@param b number Blue (0-255)
----@return number ANSI color code (0-255)
-local function rgb_to_ansi256(r, g, b)
-    local r6 = math.floor((r / 256) * 6)
-    local g6 = math.floor((g / 256) * 6)
-    local b6 = math.floor((b / 256) * 6)
-    return 16 + (r6 * 36) + (g6 * 6) + b6
-end
-
---- Build ANSI escape sequences from color code
----@param color number|string ANSI code (0-255) or hex string
----@return string bg_ansi, string fg_ansi
-local function build_cell_colors(color)
-    local bg_ansi
-    if type(color) == 'number' then
-        bg_ansi = '\27[48;5;' .. color .. 'm'
-    else
-        local r, g, b = hex_to_rgb(color)
-        local code = rgb_to_ansi256(r, g, b)
-        bg_ansi = '\27[48;5;' .. code .. 'm'
-    end
-    return bg_ansi, '\27[38;5;15m'
+--- Center text ignoring ANSI escape codes
+---@param text string Text with possible ANSI codes
+---@param width number Desired width
+---@return string Centered text
+local function center_ansi(text, width)
+    text = tostring(text)
+    local clean = text:gsub('\27%[[%d;]*m', '')
+    local padding = width - #clean
+    if padding <= 0 then return text end
+    local left = math.floor(padding / 2)
+    local right = padding - left
+    return string.rep(' ', left) .. text .. string.rep(' ', right)
 end
 
 --- Render board with styling
-local function render_board(board)
+local function _TUI_update_board(board)
     local ANSI_RESET = '\27[0m'
     local GREY_ROW3 = 235
     local DECK_COLOR = 238
-    local GREY_DARK = 234
     local BIOMATTER_COLOR = 226
     local HEALTH_COLOR = 22
     local TRASH_COLOR = 94
-    local CELL_SIZES = {12, 12, 12, 14, 14}
+    local CELL_SIZES = {14, 14, 14, 16, 16}
 
     -- Cell color configuration: CELL_COLORS[row][col] = color_code
     local CELL_COLORS = {
         [1] = {nil, nil, nil, DECK_COLOR, TRASH_COLOR},
         [2] = {nil, nil, nil, HEALTH_COLOR, BIOMATTER_COLOR},
-        [3] = {GREY_ROW3, GREY_ROW3, GREY_ROW3, GREY_DARK, GREY_DARK},
+        [3] = {GREY_ROW3, GREY_ROW3, GREY_ROW3, GREY_ROW3, GREY_ROW3},
         [4] = {nil, nil, nil, HEALTH_COLOR, BIOMATTER_COLOR},
         [5] = {nil, nil, nil, DECK_COLOR, TRASH_COLOR},
     }
 
+    local grey_bg = '\27[48;5;235m'
+
+    --- Build ANSI colored text
+    ---@param text string
+    ---@param color number
+    ---@return string
+    local function build_colored_text(text, color)
+        local bg, fg = build_cell_colors(color)
+        return bg .. fg .. text .. ANSI_RESET
+    end
+
+    --- Get cell color for special cells (Deck, Trash, LIFE, BIOMATTER)
     local function get_cell_color(row, col)
         return CELL_COLORS[row] and CELL_COLORS[row][col]
     end
 
-    local function get_biome_data(row, col)
-        if col > 3 then
-            return nil
-        end
-        local biome_map = {
-            [1] = Biomes[2],
-            [2] = Biomes[2],
-            [4] = Biomes[1],
-            [5] = Biomes[1],
-        }
-        local biome = biome_map[row]
-        if biome and biome[col] then
-            return biome[col]
+    --- Extract biome from cell {biome, index, card}
+    local function get_biome(cell)
+        if type(cell) ~= 'table' then return nil end
+        -- Cell structure: {biome_data, index, card}
+        for i = 1, #cell do
+            local v = cell[i]
+            if type(v) == 'table' and v.name then
+                return v
+            end
         end
         return nil
     end
 
-    local function render_cell(row, col, cell_content, biome_data)
-        local cell_size = CELL_SIZES[col]
-        local bg_ansi, fg_ansi, text
-
-        if biome_data and biome_data.color then
-            bg_ansi, fg_ansi = build_cell_colors(biome_data.color)
-            text = string.center(biome_data.name or cell_content, cell_size)
-        else
-            local color = get_cell_color(row, col)
-            if color then
-                bg_ansi, fg_ansi = build_cell_colors(color)
+    --- Check if cell contains a card
+    local function get_card(cell)
+        if type(cell) ~= 'table' then return nil end
+        -- Cell structure: {biome_data, index, card}
+        for i = 1, #cell do
+            local v = cell[i]
+            if type(v) == 'table' and v.emoji then
+                return v
             end
-            text = string.center(cell_content, cell_size)
         end
-
-        if bg_ansi and fg_ansi then
-            return bg_ansi .. fg_ansi .. text .. ANSI_RESET
-        end
-        return text
+        return nil
     end
 
-    local function render_separator(bg_ansi, fg_ansi)
-        return bg_ansi .. fg_ansi .. ' ' .. ANSI_RESET
+    --- Render a single cell
+    local function render_cell(row, col, cell)
+        local cell_size = CELL_SIZES[col]
+        local biome = get_biome(cell)
+        local card = get_card(cell)
+        local color
+
+        -- Priority: biome color > special cell color (Deck, Trash, etc.)
+        if biome and biome.color then
+            color = biome.color
+        else
+            color = get_cell_color(row, col)
+        end
+
+        -- Card rendering: emoji centered with grey background
+        if card and card.name then
+            local emoji = format_emoji_field(card.emoji or card.name)
+            local padding = cell_size - 2
+            local left = math.floor(padding / 2)
+            local right = padding - left
+
+            if color then
+                local bg, fg = build_cell_colors(color)
+                return bg .. fg .. string.rep(' ', left) ..
+                       grey_bg .. emoji .. ANSI_RESET ..
+                       bg .. fg .. string.rep(' ', right) .. ANSI_RESET
+            end
+            return grey_bg .. emoji .. ANSI_RESET
+        end
+
+        -- Biome rendering
+        local display_text
+        if biome and biome.name then
+            display_text = center_ansi(biome.name, cell_size)
+        elseif type(cell) == 'table' then
+            -- Non-biome table cell (LIFE, BIOMATTER, etc.)
+            local value
+            for i = 1, #cell do
+                local v = cell[i]
+                if type(v) ~= 'table' or not v.name then
+                    value = v
+                    break
+                end
+            end
+            display_text = center_ansi(value or tostring(cell), cell_size)
+        else
+            display_text = center_ansi(cell or '', cell_size)
+        end
+
+        local result
+        if color then
+            result = build_colored_text(display_text, color)
+        else
+            result = display_text .. ANSI_RESET
+        end
+        return result
     end
+
+    -- Board structure mapping:
+    -- board[1] = {biomes2[1-3], Deck, Trash, biomes2[4-6], LIFE, BIOMATTER} (10 cells)
+    -- board[2] = {'', 'SETUP', '', '', ''} (5 cells)
+    -- board[3] = {biomes1[1-3], LIFE, BIOMATTER, biomes1[4-6], Deck, Trash} (10 cells)
+    --
+    -- Visual output (5 rows x 5 cols):
+    -- Row 1: board[1][1-5]   -> biomes2[1-3], Deck, Trash
+    -- Row 2: board[1][6-10]  -> biomes2[4-6], LIFE, BIOMATTER
+    -- Row 3: board[2][1-5]   -> SETUP row
+    -- Row 4: board[3][1-5]   -> biomes1[1-3], LIFE, BIOMATTER
+    -- Row 5: board[3][6-10]  -> biomes1[4-6], Deck, Trash
+
+    local VISUAL_MAP = {
+        [1] = {board_row = 1, cols = {1, 2, 3, 4, 5}},
+        [2] = {board_row = 1, cols = {6, 7, 8, 9, 10}},
+        [3] = {board_row = 2, cols = {1, 2, 3, 4, 5}},
+        [4] = {board_row = 3, cols = {1, 2, 3, 4, 5}},
+        [5] = {board_row = 3, cols = {6, 7, 8, 9, 10}},
+    }
 
     local lines = {}
-    local lines_n = 0
+    local COL_COUNT = 5
+    local VISUAL_ROWS = 5
 
+    -- Pre-calculate board width
     local board_width = 2
-    for i = 1, #CELL_SIZES do
+    for i = 1, COL_COUNT do
         board_width = board_width + CELL_SIZES[i]
     end
 
     local sep_bg, sep_fg = build_cell_colors(GREY_ROW3)
+    local separator = sep_bg .. sep_fg .. ' ' .. ANSI_RESET
 
-    lines_n = lines_n + 1
-    lines[lines_n] = sep_bg .. sep_fg .. string.rep(' ', board_width) .. ANSI_RESET
+    local border_line = sep_bg .. sep_fg .. string.rep(' ', board_width) .. ANSI_RESET
+    lines[1] = border_line
 
-    for row = 1, #board do
-        local line = ''
-        local row_cells = board[row]
+    for visual_row = 1, VISUAL_ROWS do
+        local row_parts = {separator}
+        local mapping = VISUAL_MAP[visual_row]
+        local board_row = board[mapping.board_row]
 
-        line = line .. render_separator(sep_bg, sep_fg)
-
-        for col = 1, 5 do
-            local cell = row_cells[col]
-            local biome_data = get_biome_data(row, col)
-            line = line .. render_cell(row, col, cell, biome_data)
+        for col = 1, COL_COUNT do
+            local board_col = mapping.cols[col]
+            local cell = board_row and board_row[board_col]
+            row_parts[col + 1] = render_cell(visual_row, col, cell)
         end
 
-        line = line .. render_separator(sep_bg, sep_fg)
-
-        lines_n = lines_n + 1
-        lines[lines_n] = line
+        row_parts[COL_COUNT + 2] = separator
+        lines[visual_row + 1] = table.concat(row_parts)
     end
 
-    lines_n = lines_n + 1
-    lines[lines_n] = lines[1]
+    lines[VISUAL_ROWS + 2] = border_line
 
     print('\n' .. table.concat(lines, '\n') .. '\n')
 end
@@ -145,6 +190,6 @@ end
 ---@diagnostic disable-next-line: duplicate-set-field
 UI.update_board = function (board)
     if BUILD == 'TUI' then
-        render_board(board)
+        _TUI_update_board(board)
     end
 end

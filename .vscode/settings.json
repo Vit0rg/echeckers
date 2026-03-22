@@ -1,8 +1,10 @@
 {
     "Lua.diagnostics.disable": [
-        "unused-function"
+        "unused-function",
+        "undefined-global"
     ],
     "Lua.diagnostics.globals": [
-        "_draw_card"
+        "_draw_card",
+        "draw"
     ]
 }

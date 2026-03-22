@@ -3,7 +3,7 @@
 ## Step 1:
 [OK] Prototype and brainstorm possible mechanics
 
-## Step 2: 
+## Step 2:
 [OK] Create initial project structure
 
 ## Step 3:
@@ -18,11 +18,12 @@
 
 ## Step 6:
 [OK] Create draw system (1_draw_phase.lua)
-[Delay] Add proper navigation to hand (UI.update_hand)
-    -- Need to get inputs implemented (Step 10)
+[] Add proper navigation to hand (UI.update_hand)
 
 ## Step 7:
-[] Create Standby (set animals on board, apply specials)
+[OK] Create Standby (set animals on board, apply specials)
+    -- Implemented: _set_animal(), _remove_animal(), _move_animal(), _move_biome()
+    -- Input integration pending (Step 10)
 
 ## Step 8:
 [] Create Battle logic and ui
@@ -32,6 +33,9 @@
 
 ## Step 10:
 [] Add input mechanic
+    -- [OK] _TUI_input (basic implementation)
+    -- [ ] _TUI_menu_input
+    -- [ ] Integrate input into Standby phase actions
 
-## Step 11: 
+## Step 11:
 [] Test and Optimize

@@ -1,10 +1,4 @@
--- p1 join,
--- p2 join
-
--- select deck, biomes, items
--- Only occurs once per battle
-
-function start_battle()
+local _start_battle = function ()
     UI.display('Setting up:')
     setup()
 
@@ -13,8 +7,10 @@ function start_battle()
         UI.display({'Player turn: ', Player_turn})
         UI.display('Phase: DRAW!')
         draw()
+        UI.display('Phase: Standby!')
+        standby()
         print()
     end
 end
 
-start_battle()
+_start_battle()

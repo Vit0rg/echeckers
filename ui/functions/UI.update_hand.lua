@@ -1,36 +1,4 @@
 ---@diagnostic disable: duplicate-set-field
-
-local function build_cell_colors(color)
-    local bg_ansi
-    if type(color) == 'number' then
-        bg_ansi = '\27[48;5;' .. color .. 'm'
-    else
-        local r, g, b = hex_to_rgb(color)
-        local code = rgb_to_ansi256(r, g, b)
-        bg_ansi = '\27[48;5;' .. code .. 'm'
-    end
-    return bg_ansi, '\27[38;5;15m'
-end
-
-local function format_emoji_field(emoji)
-    if not emoji then return '❓' end
-
-    local emoji_padding_overrides = {
-        ['🦣'] = '🦣 ',
-        ['🪲'] = '🪲 ',
-        ['🕷️'] = '🕷️ ',
-        ['⭐'] = '⭐',
-        ['🪰'] = '🪰 ',
-        ['🦭'] = '🦭 ',
-        ['🐻'] = '🐻',
-        ['🪼'] = '🪼 ',
-        ['🦤'] = '🦤 ',
-        ['🦈'] = '🦈'
-    }
-
-    return emoji_padding_overrides[emoji] or emoji
-end
-
 local function _build_hidden_hand(hand, start_index, end_index, show_prev, show_next, hand_bg, hand_fg, nav_bg, nav_fg, ANSI_RESET)
     local hidden_card = hand_bg .. hand_fg .. '🂠' .. ANSI_RESET
     local card_sep = '  '
@@ -69,10 +37,10 @@ end
 
 local function _apply_navigation(lines, nav_prefix, nav_suffix, show_prev, show_next)
     if show_prev then
-        lines[4] = nav_prefix .. '  ' .. lines[4]
+        lines[4][#lines[4] + 1] = nav_prefix .. '  '
     end
     if show_next then
-        lines[4] = lines[4] .. '  ' .. nav_suffix
+        lines[4][#lines[4] + 1] = '  ' .. nav_suffix
     end
     return lines
 end
@@ -108,7 +76,7 @@ local function _TUI_update_hand(hand, is_hidden, start_index, end_index)
         return
     end
 
-    local lines = { '', '', '', '', '', '', '' }
+    local lines = { {}, {}, {}, {}, {}, {}, {} }
     local card_count = 0
 
     local card_prefix = padding_bg .. padding_fg .. ' ' .. ANSI_RESET .. hand_bg .. hand_fg
@@ -122,20 +90,24 @@ local function _TUI_update_hand(hand, is_hidden, start_index, end_index)
     for i = start_index, end_index do
         if card_count > 0 then
             for l = 1, 7 do
-                lines[l] = lines[l] .. card_sep
+                lines[l][#lines[l] + 1] = card_sep
             end
         end
 
         local card_lines = _build_card_lines(hand[i], wrap_empty, side_border, card_prefix, card_suffix, hand_bg, hand_fg, cost_fg, health_fg, speed_fg, attack_fg, defense_fg, ANSI_RESET)
 
         for l = 1, 7 do
-            lines[l] = lines[l] .. card_lines[l]
+            lines[l][#lines[l] + 1] = card_lines[l]
         end
 
         card_count = card_count + 1
     end
 
     lines = _apply_navigation(lines, nav_prefix, nav_suffix, show_prev, show_next)
+
+    for l = 1, 7 do
+        lines[l] = table.concat(lines[l])
+    end
 
     print(table.concat(lines, '\n') .. '\n')
 end

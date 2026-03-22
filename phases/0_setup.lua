@@ -50,11 +50,16 @@ local function _setup_board(MODE)
     if MODE == 'basic' then
         Board = {}
 
-        Board[1] = {Biomes[2][1], Biomes[2][2], Biomes[2][3], 'Deck', 'Trash'}
-        Board[2] = {'', '', '', LIFE, BIOMATTER}
-        Board[3] = {'', 'SETUP', '','' , ''}
-        Board[4] = {'', '', '', LIFE, BIOMATTER}
-        Board[5] = {Biomes[1][1], Biomes[1][2], Biomes[1][3], 'Deck', 'Trash'}
+        Board[1] = {{Biomes[2][1], 1}, {Biomes[2][2], 2},
+                    {Biomes[2][3], 3}, 'Deck', 'Trash',
+                    {Biomes[2][4], 4}, {Biomes[2][5], 5},
+                    {Biomes[2][6], 6}, LIFE, BIOMATTER}
+        Board[2] = {'', 'SETUP', '','' , ''}
+        Board[3] = {{Biomes[1][1], 1}, {Biomes[1][2], 2},
+                    {Biomes[1][3], 3}, LIFE, BIOMATTER,
+                    {Biomes[1][4], 4}, {Biomes[1][5], 5},
+                    {Biomes[1][6], 6}, 'Deck', 'Trash'
+                    }
     end
 end
 

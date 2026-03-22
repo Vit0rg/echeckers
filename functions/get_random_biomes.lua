@@ -2,7 +2,7 @@ local random = math.random
 
 local function get_random_biomes()
     local _selected_biomes = {}
-    local max_biomes = 3
+    local max_biomes = 6
 
     local index
     for i=1, max_biomes do

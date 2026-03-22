@@ -17,17 +17,18 @@ The project uses a **concatenation-based build system** that combines all Lua so
 ```
 echeckers/
 ├── assets/          # Game data (animals, biomes, buildings, items)
-├── functions/       # Helper functions (deck generator, biome selector)
+├── functions/       # Helper functions (deck generator, biome selector, card processor)
 ├── modes/           # Game mode configurations
-├── phases/          # Game phase logic (setup, duel, etc.)
+├── phases/          # Game phase logic (setup, draw, standby, etc.)
 ├── ui/              # User interface functions
-│   └── functions/   # UI rendering (board, hand updates)
+│   └── functions/   # UI rendering (board, hand, input, colors)
 ├── utils/           # Utility functions
 │   ├── string/      # String utilities
 │   └── table/       # Table utilities
 ├── build_system     # Bash build script
 ├── build_files.txt  # Build configuration
-└── duel.lua         # Main entry point
+├── battle.lua       # Main battle loop
+└── configuration.lua # Global settings
 ```
 
 ## Building and Running
@@ -100,8 +101,9 @@ UI = {}            -- UI namespace (populated by UI modules)
 
 ### UI Functions
 
-- **`update_board(board)`** - Renders the 5x5 game board with emoji cells
-- **`update_hand(hand, is_hidden)`** - Renders player hand (or hidden opponent hand)
+- **`update_board(board)`** - Renders the 5x10 game board with emoji cells, biome colors, and special cell highlighting (Deck, Trash, LIFE, BIOMATTER)
+- **`update_hand(hand, is_hidden, start_index, end_index)`** - Renders player hand with pagination, detailed stats (cost, health, speed, attack, defense), and navigation indicators
+- **`input(input_handler, is_menu)`** - Handles terminal input for numbers and text, with menu support (placeholder)
 
 ### Utilities
 
@@ -136,8 +138,11 @@ UI = {}            -- UI namespace (populated by UI modules)
 
 ## Current Status
 
-- **Phase:** Setup phase implemented, duel phase pending
-- **TODO:** Add `setup_hand()` logic in `phases/0_setup.lua`
+- **Phases:** Setup, Draw, and Standby phases implemented
+- **Board:** 5x10 layout with 6 biomes per player + special cells (Deck, Trash, LIFE, BIOMATTER)
+- **UI:** Enhanced TUI with color support, pagination, and detailed card stats
+- **Input:** Basic input system implemented (`_TUI_input`)
+- **TODO:** Battle phase, End phase, full input integration
 - **Platform:** Currently TUI-only, cross-platform build systems planned
 
 ## Contact

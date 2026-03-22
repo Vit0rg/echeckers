@@ -3,7 +3,7 @@
 config_file="build_files.txt"
 target="processed_script.lua"
 
-SCRIPT_DIR=${BASH_SOURCE%/*}
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 files_to_process=()
 
