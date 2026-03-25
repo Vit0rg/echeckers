@@ -8,30 +8,17 @@ local function _setup_biomes()
     Biomes = {}
     Biomes[1] = get_random_biomes()
     Biomes[2] = get_random_biomes()
-    --[[
-    print('BIOMES 1:\n')
-    table.print(Biomes_p1, 'v')
-    print('BIOMES 2:\n')
-    table.print(Biomes_p2, 'v')
-    ]]
 end
 
 local function _setup_decks()
     Decks = { true, true }
     Decks[1] = generate_random_deck()
     Decks[2] = generate_random_deck()
-    --[[
-    print('DECK 1:\n')
-    table.print(deck_p1, 'v')
-    print('DECK 2\n')
-    table.print(deck_p2, 'v')
-    ]]
 end
 
 local function _setup_items()
     return
 end
-
 
 local function _setup_starter()
     if math.random(1, 2) == 1 then
@@ -44,11 +31,8 @@ local function _setup_starter()
     Player_turn = 2
 end
 
-
--- Board should be global
 local function _setup_board(MODE)
     if MODE == 'basic' then
-        -- Initialize board with new structure
         Board = BoardModule.init(Biomes[1], Biomes[2])
     end
 end
@@ -68,7 +52,6 @@ local function _setup_hands()
 end
 
 local function _setup_ui()
-    -- Each player should not see the other hand
     UI.update_hand(Hands[2], 'hidden')
     UI.update_board(Board)
     UI.update_hand(Hands[1])
@@ -79,7 +62,7 @@ local _setup_trash = function()
     Trashs[1] = {}
     Trashs[2] = {}
 end
--- @1: MODE(string)
+
 local function setup()
     if MODE == 'basic' then
         _setup_biomes()

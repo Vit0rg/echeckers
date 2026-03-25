@@ -23,7 +23,7 @@ function StandbyValidation.validate_biome_move(player, from, to)
     if from == to then
         return false, 'Source and destination must differ'
     end
-    if not Board.biomes or not Board.biomes[player] then
+    if not Board then
         return false, 'Board not initialized'
     end
     return true
@@ -39,7 +39,7 @@ function StandbyValidation.validate_set_animal(player, index, hand, hand_index)
     if not hand or not hand[hand_index] then
         return false, 'Invalid card in hand'
     end
-    if not Board.biomes or not Board.biomes[player] then
+    if not Board then
         return false, 'Board not initialized'
     end
     if not BiomesOps.is_empty(player, index) then
@@ -55,7 +55,7 @@ function StandbyValidation.validate_remove_animal(player, index)
     if not StandbyValidation.valid_biome_index(index) then
         return false, 'Invalid biome index (1-6)'
     end
-    if not Board.biomes or not Board.biomes[player] then
+    if not Board then
         return false, 'Board not initialized'
     end
     if BiomesOps.is_empty(player, index) then

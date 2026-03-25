@@ -1622,135 +1622,171 @@ end
 -- Update when player joins the room
 
 -- /home/s1eep1ess/workspace/lua/echeckers/battle/board/board.lua
---- Board module - manages board structure and layout
--- Separates biome data from visual layout
+--- Board module - flat table structure
+-- Index mapping:
+--   1-6:  Player 2 biomes
+--   7-12: Player 1 biomes
+--   13-14: Player 2 Deck/Trash
+--   15-16: Player 1 Deck/Trash
+--   17-18: Player 2 LIFE/BIOMATTER
+--   19-20: Player 1 LIFE/BIOMATTER
 
 BoardModule = {}
 
---- Initialize board structure for basic mode
+-- Constants for index mapping
+BoardModule.P2_BIOME_START = 1
+BoardModule.P1_BIOME_START = 7
+BoardModule.BIOMES_PER_PLAYER = 6
+
+--- Get biome index for player
+---@param player number (1 or 2)
+---@param index number (1-6)
+---@return number Flat table index
+function BoardModule.biome_index(player, index)
+    if player == 1 then
+        return BoardModule.P1_BIOME_START + index - 1
+    else
+        return BoardModule.P2_BIOME_START + index - 1
+    end
+end
+
+--- Get player from biome index
+---@param index number (1-12)
+---@return number Player (1 or 2)
+function BoardModule.biome_player(index)
+    if index <= 6 then return 2 end
+    return 1
+end
+
+--- Get biome slot (1-6) from flat index
+---@param index number (1-12)
+---@return number Biome slot
+function BoardModule.biome_slot(index)
+    if index <= 6 then return index end
+    return index - 6
+end
+
+--- Initialize board with flat structure
 ---@param biomes_p1 table Player 1's biomes (array of 6)
 ---@param biomes_p2 table Player 2's biomes (array of 6)
 ---@return table Board instance
 function BoardModule.init(biomes_p1, biomes_p2)
-    local board = {
-        -- Biome data per player (game logic source of truth)
-        biomes = {
-            [1] = {},  -- Player 1
-            [2] = {},  -- Player 2
-        },
+    local board = {}
 
-        -- Visual layout for UI rendering
-        layout = {
-            [1] = {},  -- Player 2 row (top)
-            [2] = {},  -- Middle zone
-            [3] = {},  -- Player 1 row (bottom)
-        },
-    }
-
-    -- Initialize biomes with animal slots
+    -- Biomes: {def, animal}
     for i = 1, 6 do
-        board.biomes[1][i] = { def = biomes_p1[i], animal = nil }
-        board.biomes[2][i] = { def = biomes_p2[i], animal = nil }
+        board[i] = { def = biomes_p2[i], animal = nil }      -- P2 biomes
+        board[i + 6] = { def = biomes_p1[i], animal = nil }  -- P1 biomes
     end
 
-    -- Build visual layout from biomes
-    -- Layout: [biome1-3, Deck, Trash, biome4-6, LIFE, BIOMATTER]
-    board.layout[1] = {
-        board.biomes[2][1], board.biomes[2][2], board.biomes[2][3],
-        'Deck', 'Trash',
-        board.biomes[2][4], board.biomes[2][5], board.biomes[2][6],
-        'LIFE', 'BIOMATTER'
-    }
-
-    board.layout[2] = { '', 'SETUP', '', '', '' }
-
-    board.layout[3] = {
-        board.biomes[1][1], board.biomes[1][2], board.biomes[1][3],
-        'LIFE', 'BIOMATTER',
-        board.biomes[1][4], board.biomes[1][5], board.biomes[1][6],
-        'Deck', 'Trash'
-    }
+    -- Special zones
+    board.deck_p2 = 'Deck'
+    board.trash_p2 = 'Trash'
+    board.deck_p1 = 'Deck'
+    board.trash_p1 = 'Trash'
+    board.life_p2 = 2000
+    board.biomatter_p2 = 3
+    board.life_p1 = 2000
+    board.biomatter_p1 = 3
 
     return board
 end
 
---- Get biome by player and index
+--- Get biome by player and slot
 ---@param player number (1 or 2)
----@param index number (1-6)
+---@param slot number (1-6)
 ---@return table|nil Biome {def, animal}
-function BoardModule.get_biome(player, index)
-    if Board.biomes and Board.biomes[player] then
-        return Board.biomes[player][index]
+function BoardModule.get_biome(player, slot)
+    if not Board then return nil end
+    local idx = BoardModule.biome_index(player, slot)
+    return Board[idx]
+end
+
+--- Set biome animal
+---@param player number (1 or 2)
+---@param slot number (1-6)
+---@param card table|nil
+function BoardModule.set_biome_animal(player, slot, card)
+    local biome = BoardModule.get_biome(player, slot)
+    if biome then
+        biome.animal = card
     end
-    return nil
 end
 
---- Get player's visual row (1 for P2, 3 for P1)
----@param player number
----@return number
-function BoardModule.get_row(player)
-    return (player == 1) and 3 or 1
-end
+--- Get visual layout row for UI
+---@param player number (1 or 2)
+---@return table Layout row (10 cells)
+function BoardModule.get_layout_row(player)
+    if not Board then return {} end
 
---- Get column index for biome in layout
----@param index number (1-6)
----@return number Column (1-3 or 6-8)
-function BoardModule.get_column(index)
-    if index <= 3 then
-        return index
+    if player == 2 then
+        -- P2 row: biomes 1-3, Deck, Trash, biomes 4-6, LIFE, BIOMATTER
+        return {
+            Board[1], Board[2], Board[3],
+            Board.deck_p2, Board.trash_p2,
+            Board[4], Board[5], Board[6],
+            Board.life_p2, Board.biomatter_p2
+        }
     else
-        return index + 2  -- Skip Deck/Trash at 4,5
+        -- P1 row: biomes 1-3, LIFE, BIOMATTER, biomes 4-6, Deck, Trash
+        return {
+            Board[7], Board[8], Board[9],
+            Board.life_p1, Board.biomatter_p1,
+            Board[10], Board[11], Board[12],
+            Board.deck_p1, Board.trash_p1
+        }
     end
 end
 
---- Sync layout with biome changes
-function BoardModule.sync()
-    if not Board.biomes then return end
-    for i = 1, 6 do
-        local col = BoardModule.get_column(i)
-        Board.layout[1][col] = Board.biomes[2][i]
-        Board.layout[3][col] = Board.biomes[1][i]
-    end
+--- Get middle layout row
+---@return table Middle row (5 cells)
+function BoardModule.get_middle_row()
+    return { '', 'SETUP', '', '', '' }
+end
+
+--- Swap two biomes for a player
+---@param player number (1 or 2)
+---@param slot1 number (1-6)
+---@param slot2 number (1-6)
+function BoardModule.swap_biomes(player, slot1, slot2)
+    local idx1 = BoardModule.biome_index(player, slot1)
+    local idx2 = BoardModule.biome_index(player, slot2)
+    Board[idx1], Board[idx2] = Board[idx2], Board[idx1]
 end
 
 -- /home/s1eep1ess/workspace/lua/echeckers/battle/board/biomes.lua
 --- Biome operations module
--- Direct operations on biome animal slots
+-- Works with flat board structure
 
 BiomesOps = {}
 
 --- Check if biome has no animal
 ---@param player number (1 or 2)
----@param index number (1-6)
+---@param slot number (1-6)
 ---@return boolean
-function BiomesOps.is_empty(player, index)
-    local biome = BoardModule.get_biome(player, index)
+function BiomesOps.is_empty(player, slot)
+    local biome = BoardModule.get_biome(player, slot)
     return not biome or biome.animal == nil
 end
 
 --- Place animal on biome
 ---@param player number (1 or 2)
----@param index number (1-6)
+---@param slot number (1-6)
 ---@param card table
-function BiomesOps.set_animal(player, index, card)
-    local biome = BoardModule.get_biome(player, index)
-    if biome then
-        biome.animal = card
-        BoardModule.sync()
-    end
+function BiomesOps.set_animal(player, slot, card)
+    BoardModule.set_biome_animal(player, slot, card)
 end
 
 --- Remove animal from biome
 ---@param player number (1 or 2)
----@param index number (1-6)
+---@param slot number (1-6)
 ---@return table|nil Removed card
-function BiomesOps.remove_animal(player, index)
-    local biome = BoardModule.get_biome(player, index)
+function BiomesOps.remove_animal(player, slot)
+    local biome = BoardModule.get_biome(player, slot)
     if not biome or not biome.animal then return nil end
 
     local removed = biome.animal
     biome.animal = nil
-    BoardModule.sync()
     return removed
 end
 
@@ -1759,27 +1795,25 @@ end
 ---@param from number (1-6)
 ---@param to number (1-6)
 function BiomesOps.move(player, from, to)
-    if from == to or not Board.biomes[player] then return end
-    Board.biomes[player][from], Board.biomes[player][to] =
-    Board.biomes[player][to], Board.biomes[player][from]
-    BoardModule.sync()
+    if from == to then return end
+    BoardModule.swap_biomes(player, from, to)
 end
 
 --- Get animal on biome
 ---@param player number (1 or 2)
----@param index number (1-6)
+---@param slot number (1-6)
 ---@return table|nil
-function BiomesOps.get_animal(player, index)
-    local biome = BoardModule.get_biome(player, index)
+function BiomesOps.get_animal(player, slot)
+    local biome = BoardModule.get_biome(player, slot)
     return biome and biome.animal
 end
 
 --- Get biome definition
 ---@param player number (1 or 2)
----@param index number (1-6)
+---@param slot number (1-6)
 ---@return table|nil
-function BiomesOps.get_def(player, index)
-    local biome = BoardModule.get_biome(player, index)
+function BiomesOps.get_def(player, slot)
+    local biome = BoardModule.get_biome(player, slot)
     return biome and biome.def
 end
 
@@ -1809,7 +1843,7 @@ function StandbyValidation.validate_biome_move(player, from, to)
     if from == to then
         return false, 'Source and destination must differ'
     end
-    if not Board.biomes or not Board.biomes[player] then
+    if not Board then
         return false, 'Board not initialized'
     end
     return true
@@ -1825,7 +1859,7 @@ function StandbyValidation.validate_set_animal(player, index, hand, hand_index)
     if not hand or not hand[hand_index] then
         return false, 'Invalid card in hand'
     end
-    if not Board.biomes or not Board.biomes[player] then
+    if not Board then
         return false, 'Board not initialized'
     end
     if not BiomesOps.is_empty(player, index) then
@@ -1841,7 +1875,7 @@ function StandbyValidation.validate_remove_animal(player, index)
     if not StandbyValidation.valid_biome_index(index) then
         return false, 'Invalid biome index (1-6)'
     end
-    if not Board.biomes or not Board.biomes[player] then
+    if not Board then
         return false, 'Board not initialized'
     end
     if BiomesOps.is_empty(player, index) then
@@ -1861,30 +1895,17 @@ local function _setup_biomes()
     Biomes = {}
     Biomes[1] = get_random_biomes()
     Biomes[2] = get_random_biomes()
-    --[[
-    print('BIOMES 1:\n')
-    table.print(Biomes_p1, 'v')
-    print('BIOMES 2:\n')
-    table.print(Biomes_p2, 'v')
-    ]]
 end
 
 local function _setup_decks()
     Decks = { true, true }
     Decks[1] = generate_random_deck()
     Decks[2] = generate_random_deck()
-    --[[
-    print('DECK 1:\n')
-    table.print(deck_p1, 'v')
-    print('DECK 2\n')
-    table.print(deck_p2, 'v')
-    ]]
 end
 
 local function _setup_items()
     return
 end
-
 
 local function _setup_starter()
     if math.random(1, 2) == 1 then
@@ -1897,11 +1918,8 @@ local function _setup_starter()
     Player_turn = 2
 end
 
-
--- Board should be global
 local function _setup_board(MODE)
     if MODE == 'basic' then
-        -- Initialize board with new structure
         Board = BoardModule.init(Biomes[1], Biomes[2])
     end
 end
@@ -1921,7 +1939,6 @@ local function _setup_hands()
 end
 
 local function _setup_ui()
-    -- Each player should not see the other hand
     UI.update_hand(Hands[2], 'hidden')
     UI.update_board(Board)
     UI.update_hand(Hands[1])
@@ -1932,7 +1949,7 @@ local _setup_trash = function()
     Trashs[1] = {}
     Trashs[2] = {}
 end
--- @1: MODE(string)
+
 local function setup()
     if MODE == 'basic' then
         _setup_biomes()
@@ -2234,11 +2251,11 @@ local function _TUI_update_board(board)
     end
 
     local VISUAL_MAP = {
-        [1] = {layout_row = 1, cols = {1, 2, 3, 4, 5}},
-        [2] = {layout_row = 1, cols = {6, 7, 8, 9, 10}},
-        [3] = {layout_row = 2, cols = {1, 2, 3, 4, 5}},
-        [4] = {layout_row = 3, cols = {1, 2, 3, 4, 5}},
-        [5] = {layout_row = 3, cols = {6, 7, 8, 9, 10}},
+        [1] = {row_func = 'get_layout_row', player = 2, cols = {1, 2, 3, 4, 5}},
+        [2] = {row_func = 'get_layout_row', player = 2, cols = {6, 7, 8, 9, 10}},
+        [3] = {row_func = 'get_middle_row', cols = {1, 2, 3, 4, 5}},
+        [4] = {row_func = 'get_layout_row', player = 1, cols = {1, 2, 3, 4, 5}},
+        [5] = {row_func = 'get_layout_row', player = 1, cols = {6, 7, 8, 9, 10}},
     }
 
     local board_width = 2
@@ -2270,7 +2287,7 @@ local function _TUI_update_board(board)
                 return center_ansi(cell.animal and 'occupied' or 'empty', CELL_SIZES[1]), nil, false
             end
         end,
-        -- Plain table with name (LIFE, BIOMATTER, etc.)
+        -- Plain table with name
         function(cell)
             if cell.name then
                 return center_ansi(cell.name, CELL_SIZES[1]), nil, false
@@ -2315,12 +2332,16 @@ local function _TUI_update_board(board)
         return text .. ANSI_RESET
     end
 
-    local layout = board.layout or board
-
     for visual_row = 1, 5 do
         local row_parts = {separator}
         local mapping = VISUAL_MAP[visual_row]
-        local layout_row = layout[mapping.layout_row]
+        local layout_row
+
+        if mapping.row_func == 'get_layout_row' then
+            layout_row = BoardModule.get_layout_row(mapping.player)
+        else
+            layout_row = BoardModule.get_middle_row()
+        end
 
         for col = 1, 5 do
             local cell = layout_row and layout_row[mapping.cols[col]]

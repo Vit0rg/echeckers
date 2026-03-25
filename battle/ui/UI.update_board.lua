@@ -39,11 +39,11 @@ local function _TUI_update_board(board)
     end
 
     local VISUAL_MAP = {
-        [1] = {layout_row = 1, cols = {1, 2, 3, 4, 5}},
-        [2] = {layout_row = 1, cols = {6, 7, 8, 9, 10}},
-        [3] = {layout_row = 2, cols = {1, 2, 3, 4, 5}},
-        [4] = {layout_row = 3, cols = {1, 2, 3, 4, 5}},
-        [5] = {layout_row = 3, cols = {6, 7, 8, 9, 10}},
+        [1] = {row_func = 'get_layout_row', player = 2, cols = {1, 2, 3, 4, 5}},
+        [2] = {row_func = 'get_layout_row', player = 2, cols = {6, 7, 8, 9, 10}},
+        [3] = {row_func = 'get_middle_row', cols = {1, 2, 3, 4, 5}},
+        [4] = {row_func = 'get_layout_row', player = 1, cols = {1, 2, 3, 4, 5}},
+        [5] = {row_func = 'get_layout_row', player = 1, cols = {6, 7, 8, 9, 10}},
     }
 
     local board_width = 2
@@ -75,7 +75,7 @@ local function _TUI_update_board(board)
                 return center_ansi(cell.animal and 'occupied' or 'empty', CELL_SIZES[1]), nil, false
             end
         end,
-        -- Plain table with name (LIFE, BIOMATTER, etc.)
+        -- Plain table with name
         function(cell)
             if cell.name then
                 return center_ansi(cell.name, CELL_SIZES[1]), nil, false
@@ -120,12 +120,16 @@ local function _TUI_update_board(board)
         return text .. ANSI_RESET
     end
 
-    local layout = board.layout or board
-
     for visual_row = 1, 5 do
         local row_parts = {separator}
         local mapping = VISUAL_MAP[visual_row]
-        local layout_row = layout[mapping.layout_row]
+        local layout_row
+
+        if mapping.row_func == 'get_layout_row' then
+            layout_row = BoardModule.get_layout_row(mapping.player)
+        else
+            layout_row = BoardModule.get_middle_row()
+        end
 
         for col = 1, 5 do
             local cell = layout_row and layout_row[mapping.cols[col]]

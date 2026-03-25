@@ -4,6 +4,41 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Step 6.5 - Flat Board Structure
+
+### Changed
+- **Board Structure** (`battle/board/board.lua`)
+  - Replaced nested tables (`Board.biomes[player][index]`) with flat table
+  - Index mapping: 1-6 = Player 2 biomes, 7-12 = Player 1 biomes
+  - Direct access: `Board[1]` = P2 biome 1, `Board[7]` = P1 biome 1
+  - Removed redundant `Board.layout` table - layout generated on-demand
+  - Added helper functions:
+    - `BoardModule.biome_index(player, slot)` - Convert player/slot to flat index
+    - `BoardModule.biome_player(index)` - Get player from flat index
+    - `BoardModule.biome_slot(index)` - Get slot from flat index
+    - `BoardModule.get_layout_row(player)` - Generate visual row for UI
+    - `BoardModule.get_middle_row()` - Get middle SETUP row
+    - `BoardModule.swap_biomes(player, slot1, slot2)` - Swap two biomes
+
+- **Biome Operations** (`battle/board/biomes.lua`)
+  - Simplified to use flat board access via `BoardModule.get_biome()`
+  - Removed `BoardModule.sync()` call (no separate layout to sync)
+  - All operations now directly modify the flat board table
+
+- **UI Rendering** (`battle/ui/UI.update_board.lua`)
+  - Updated to use `BoardModule.get_layout_row()` for visual data
+  - Removed `board.layout` and `board.rows` references
+  - VISUAL_MAP now calls board module functions directly
+
+- **Setup Phase** (`battle/phases/0_setup.lua`)
+  - Updated to use `BoardModule.init()` with flat structure
+
+### Benefits
+- **Simpler access** - `Board[1]` instead of `Board.biomes[2][1]`
+- **Less memory** - No duplicate layout tables
+- **Faster operations** - Direct index access, no nested lookups
+- **Cleaner code** - Helper functions encapsulate index mapping logic
+
 ### Step 6.4 - Multi-Step Build System and Project Reorganization
 
 ### Implemented
