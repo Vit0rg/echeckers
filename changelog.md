@@ -4,6 +4,54 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Step 6.4 - Multi-Step Build System and Project Reorganization
+
+### Implemented
+- **Multi-Step Build System** (`build_system`, `build.ps1`)
+  - Refactored from single-file to multi-step build process
+  - Separate build configurations for main game and battle module
+  - Bash script: Supports associative arrays for build steps with error handling
+  - PowerShell script: Parallel functionality for Windows development
+  - Build output shows file count and line count per step
+  - Clear visual separation between build steps with formatted output
+
+- **Build Configuration Files**
+  - `build_main.txt` - Core game files (configuration, events, src, utils, ui/main_menu)
+  - `build_battle.txt` - Battle gameplay module (all battle/ folder content)
+
+- **Build Outputs**
+  - `processed_script.lua` - Main game bundle (230 lines)
+  - `battle/processed_battle.lua` - Battle module bundle (2506 lines)
+
+### Changed
+- **Project Structure** - All battle gameplay files moved to `battle/` directory:
+  - `battle/assets/` - Game assets (animals, biomes, buildings, items)
+  - `battle/functions/` - Game logic functions
+  - `battle/board/` - Board management modules
+  - `battle/phases/` - Game phase implementations
+  - `battle/ui/` - UI rendering functions
+  - `battle/validation/` - Input and move validation
+  - `battle/decks/` - Deck definitions
+
+- **Main Game Scope** - Core framework files remain at root level:
+  - `configuration.lua` - Global configuration
+  - `modes/` - Game mode definitions
+  - `utils/` - Utility functions
+  - `events/` - Event handlers
+  - `src/` - Source initialization files
+  - `ui/main_menu.lua` - Main menu UI
+
+### Removed
+- `build_files.txt` - Replaced by separate build configurations
+- Root-level game logic files (moved to `battle/`)
+
+### Build System Features
+- Automatic file discovery from config entries
+- Directory scanning for `.lua` files
+- Warning messages for missing files
+- Build failure detection and reporting
+- Cross-platform support (Bash for Linux/macOS, PowerShell for Windows)
+
 ### Step 6.3 - Board Refactoring
 
 ### Implemented

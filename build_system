@@ -1,36 +1,85 @@
 #! /usr/bin/env bash
-
-config_file="build_files.txt"
-target="processed_script.lua"
+# Multi-step build system for echeckers
+# Builds main game and battle module separately
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 
-files_to_process=()
+# Build configuration
+declare -A BUILDS=(
+    ["main"]="build_main.txt processed_script.lua"
+    ["battle"]="build_battle.txt battle/processed_battle.lua"
+)
 
-while IFS= read -r entry || [[ -n "$entry" ]]; do
-  [[ -z "$entry" || "$entry" =~ ^# ]] && continue
+build_failed=0
 
-  full_path="$SCRIPT_DIR/$entry"
+build_step() {
+    local name="$1"
+    local config_file="$2"
+    local target="$3"
+    
+    echo "========================================"
+    echo "BUILD STEP: $name"
+    echo "Config: $config_file -> Output: $target"
+    echo "========================================"
+    
+    if [[ ! -f "$config_file" ]]; then
+        echo "ERROR: Config file not found: $config_file"
+        return 1
+    fi
+    
+    local files_to_process=()
+    
+    while IFS= read -r entry || [[ -n "$entry" ]]; do
+        [[ -z "$entry" || "$entry" =~ ^# ]] && continue
+        
+        local full_path="$SCRIPT_DIR/$entry"
+        
+        if [[ -d "$full_path" ]]; then
+            while IFS= read -r file; do
+                files_to_process+=("$file")
+            done < <(find "$full_path" -type f -name "*.lua")
+        elif [[ -f "$full_path" ]]; then
+            files_to_process+=("$full_path")
+        else
+            echo "WARNING: File not found: $full_path"
+        fi
+    done < "$config_file"
+    
+    echo ""
+    echo "Files to concatenate (${#files_to_process[@]}):"
+    for item in "${files_to_process[@]}"; do
+        echo "  $item"
+    done
+    echo ""
+    
+    # Build the output
+    echo "" > "$target"
+    for file in "${files_to_process[@]}"; do
+        echo "-- $file" >> "$target"
+        cat "$file" >> "$target"
+        echo "" >> "$target"
+    done
+    
+    echo "Output: $target ($(wc -l < "$target") lines)"
+    echo ""
+    return 0
+}
 
-  if [[ -d "$full_path" ]]; then
-    while IFS= read -r file; do
-      files_to_process+=("$file")
-    done < <(find "$full_path" -type f)
-  elif [[ -f "$full_path" ]]; then
-    files_to_process+=("$full_path")
-  fi
-done < "$config_file"
-
-echo -e "Concatenating:\n"
-for item in "${files_to_process[@]}"; do
-  echo "${item}"
+# Run build steps
+for name in "${!BUILDS[@]}"; do
+    read -r config target <<< "${BUILDS[$name]}"
+    if ! build_step "$name" "$config" "$target"; then
+        build_failed=1
+    fi
 done
 
-{
-  echo "" > "$target"
-  for file in "${files_to_process[@]}"; do
-    echo "-- $file"
-    cat "$file"
-    echo ""
-  done
-} > "$target"
+echo "========================================"
+if [[ $build_failed -eq 0 ]]; then
+    echo "BUILD COMPLETE: All steps succeeded"
+else
+    echo "BUILD FAILED: One or more steps failed"
+fi
+echo "========================================"
+
+exit $build_failed

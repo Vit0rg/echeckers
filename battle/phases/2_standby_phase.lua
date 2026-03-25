@@ -7,7 +7,7 @@ local _set_animal = function(hand_index, biome_index)
     local len = #hand
     local card = hand[hand_index]
 
-    local valid, err = Validation.validate_set_animal(turn, biome_index, hand, hand_index)
+    local valid, err = StandbyValidation.validate_set_animal(turn, biome_index, hand, hand_index)
     if not valid then
         UI.display('Invalid move: ' .. err)
         return false
@@ -29,7 +29,7 @@ local _remove_animal = function(biome_index)
     local turn = Player_turn
     local hand = Hands[turn]
 
-    local valid, err = Validation.validate_remove_animal(turn, biome_index)
+    local valid, err = StandbyValidation.validate_remove_animal(turn, biome_index)
     if not valid then
         UI.display('Invalid move: ' .. err)
         return false
@@ -53,7 +53,7 @@ local _move_biome = function(from_biome_index, to_biome_index)
 
     local turn = Player_turn
 
-    local valid, err = Validation.validate_biome_move(turn, from_biome_index, to_biome_index)
+    local valid, err = StandbyValidation.validate_biome_move(turn, from_biome_index, to_biome_index)
     if not valid then
         UI.display('Invalid move: ' .. err)
         return false

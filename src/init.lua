@@ -2,14 +2,12 @@
 
 --[[ 
     start game ->
-        Draw phase
-            No Standby phase
-        Main phase 1
-        Battle Phase
-            Start step
+        0 = Setup
+        1 = Draw phase
+        2 = Standby phase
+            Move and set
+        3 = Battle Phase
             Battle step
             Damage step
-            End step
-            No Main phase 2
-        End phase
+        4 = End phase
     ]]

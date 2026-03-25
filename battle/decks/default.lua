@@ -1,13 +1,6 @@
 DECK = {
-	vanilla = {
-		-- 108 cartas
-		-- 2 cópias de 1 a 9 de cada cor
-		-- 2 cópias de draw2 de cada cor
-		-- 2 cópias de skip de cada cor
-		-- 2 cópias de reverse de cada cor
-		-- 1 cópia de 0 de cada cor
-		-- 4 cópias de wild
-		-- 4 cópias de draw4
+	-- Max: 100 cartas
+	basic = {
 		{"red","n0"},
 		{"red","n1"},{"red","n2"},{"red","n3"},{"red","n4"},{"red","n5"},{"red","n6"},{"red","n7"},{"red","n8"},{"red","n9"},
 		{"red","n1"},{"red","n2"},{"red","n3"},{"red","n4"},{"red","n5"},{"red","n6"},{"red","n7"},{"red","n8"},{"red","n9"},

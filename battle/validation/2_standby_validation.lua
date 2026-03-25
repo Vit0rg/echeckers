@@ -1,23 +1,23 @@
---- Validation for board operations
+--- Validation for standby phase operations
 
-Validation = {}
+StandbyValidation = {}
 
-function Validation.valid_biome_index(index)
+function StandbyValidation.valid_biome_index(index)
     return type(index) == 'number' and index >= 1 and index <= 6
 end
 
-function Validation.valid_player(player)
+function StandbyValidation.valid_player(player)
     return type(player) == 'number' and (player == 1 or player == 2)
 end
 
-function Validation.validate_biome_move(player, from, to)
-    if not Validation.valid_player(player) then
+function StandbyValidation.validate_biome_move(player, from, to)
+    if not StandbyValidation.valid_player(player) then
         return false, 'Invalid player'
     end
-    if not Validation.valid_biome_index(from) then
+    if not StandbyValidation.valid_biome_index(from) then
         return false, 'Invalid source biome (1-6)'
     end
-    if not Validation.valid_biome_index(to) then
+    if not StandbyValidation.valid_biome_index(to) then
         return false, 'Invalid destination biome (1-6)'
     end
     if from == to then
@@ -29,11 +29,11 @@ function Validation.validate_biome_move(player, from, to)
     return true
 end
 
-function Validation.validate_set_animal(player, index, hand, hand_index)
-    if not Validation.valid_player(player) then
+function StandbyValidation.validate_set_animal(player, index, hand, hand_index)
+    if not StandbyValidation.valid_player(player) then
         return false, 'Invalid player'
     end
-    if not Validation.valid_biome_index(index) then
+    if not StandbyValidation.valid_biome_index(index) then
         return false, 'Invalid biome index (1-6)'
     end
     if not hand or not hand[hand_index] then
@@ -48,11 +48,11 @@ function Validation.validate_set_animal(player, index, hand, hand_index)
     return true
 end
 
-function Validation.validate_remove_animal(player, index)
-    if not Validation.valid_player(player) then
+function StandbyValidation.validate_remove_animal(player, index)
+    if not StandbyValidation.valid_player(player) then
         return false, 'Invalid player'
     end
-    if not Validation.valid_biome_index(index) then
+    if not StandbyValidation.valid_biome_index(index) then
         return false, 'Invalid biome index (1-6)'
     end
     if not Board.biomes or not Board.biomes[player] then
