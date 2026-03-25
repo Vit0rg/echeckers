@@ -17,7 +17,7 @@ local function _setup_biomes()
 end
 
 local function _setup_decks()
-    Decks={true,true}
+    Decks = { true, true }
     Decks[1] = generate_random_deck()
     Decks[2] = generate_random_deck()
     --[[
@@ -36,30 +36,20 @@ end
 local function _setup_starter()
     if math.random(1, 2) == 1 then
         UI.display('Player 1 goes 1st')
-        Player_turn=1
+        Player_turn = 1
         return
     end
 
     UI.display('Player 2 goes 1st')
-    Player_turn=2
+    Player_turn = 2
 end
 
 
 -- Board should be global
 local function _setup_board(MODE)
     if MODE == 'basic' then
-        Board = {}
-
-        Board[1] = {{Biomes[2][1], 1}, {Biomes[2][2], 2},
-                    {Biomes[2][3], 3}, 'Deck', 'Trash',
-                    {Biomes[2][4], 4}, {Biomes[2][5], 5},
-                    {Biomes[2][6], 6}, LIFE, BIOMATTER}
-        Board[2] = {'', 'SETUP', '','' , ''}
-        Board[3] = {{Biomes[1][1], 1}, {Biomes[1][2], 2},
-                    {Biomes[1][3], 3}, LIFE, BIOMATTER,
-                    {Biomes[1][4], 4}, {Biomes[1][5], 5},
-                    {Biomes[1][6], 6}, 'Deck', 'Trash'
-                    }
+        -- Initialize board with new structure
+        Board = BoardModule.init(Biomes[1], Biomes[2])
     end
 end
 
@@ -84,8 +74,8 @@ local function _setup_ui()
     UI.update_hand(Hands[1])
 end
 
-local _setup_trash = function ()
-    Trashs = {true, true}
+local _setup_trash = function()
+    Trashs = { true, true }
     Trashs[1] = {}
     Trashs[2] = {}
 end
@@ -107,5 +97,4 @@ local function setup()
     if MODE == 'advanced' then
         return
     end
-
 end

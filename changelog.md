@@ -4,6 +4,61 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Step 6.3 - Board Refactoring
+
+### Implemented
+- **Board Module** (`board/board.lua`)
+  - Added `BoardModule.init()` - Initialize board with separated biome data and visual layout
+  - Added `BoardModule.get_biome()` - Get biome by player and index
+  - Added `BoardModule.get_row()` - Get player's visual row (1 for P2, 3 for P1)
+  - Added `BoardModule.get_column()` - Get column index for biome in layout
+  - Added `BoardModule.sync()` - Sync layout with biome changes
+  - New structure: `Board.biomes` for game logic, `Board.layout` for UI rendering
+
+- **Biome Operations** (`board/biomes.lua`)
+  - Added `BiomesOps.is_empty()` - Check if biome has no animal
+  - Added `BiomesOps.set_animal()` - Place animal on biome
+  - Added `BiomesOps.remove_animal()` - Remove animal from biome
+  - Added `BiomesOps.move()` - Swap two biomes
+  - Added `BiomesOps.get_animal()` - Get animal on biome
+  - Added `BiomesOps.get_def()` - Get biome definition
+
+- **Validation Module** (`board/validation.lua`)
+  - Added `Validation.valid_biome_index()` - Validate biome index (1-6)
+  - Added `Validation.valid_player()` - Validate player index (1 or 2)
+  - Added `Validation.validate_biome_move()` - Validate biome swap operation
+  - Added `Validation.validate_set_animal()` - Validate placing animal
+  - Added `Validation.validate_remove_animal()` - Validate removing animal
+
+### Changed
+- **Board Structure** (`phases/0_setup.lua`)
+  - Refactored to use `BoardModule.init()` for board initialization
+  - Changed from flat array to structured `{biomes, layout}` format
+  - Biome data now stored as `{def, animal}` instead of `{biome, state}`
+
+- **Standby Phase** (`phases/2_standby_phase.lua`)
+  - Refactored to use `BiomesOps` and `Validation` modules
+  - Removed redundant validation logic
+  - Simplified `_set_animal()`, `_remove_animal()`, `_move_biome()` functions
+
+- **Board Rendering** (`ui/functions/UI.update_board.lua`)
+  - Refactored to use table-driven dispatch with `cell_extractors`
+  - Removed if-elseif chains for cell content detection
+  - Removed legacy format support
+  - Added proper color handling for string cells (Deck, Trash, LIFE, BIOMATTER)
+  - Changed `Board.rows` to `Board.layout` for better naming
+
+- **Build Files** (`build_files.txt`)
+  - Added `board/board.lua`, `board/biomes.lua`, `board/validation.lua`
+
+### Removed
+- **Redundant State Tracking** - Biome state now represented by `animal` field only (nil = empty)
+- **ui/board.lua** - Removed redundant static board file
+- **Legacy Cell Format Support** - Removed `{biome, index, card}` format handling
+
+### Fixed
+- **Colorless Setup/Layout** - String cells now properly colored via `CELL_COLORS[row][col]`
+
 ### Implemented
 - **Standby Phase** (`phases/2_standby_phase.lua`)
   - Added `_set_animal()` - Place animal cards from hand to board biomes

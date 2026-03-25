@@ -1696,17 +1696,16 @@ UI.input = function(input_handler, is_menu)
 end
 -- /home/s1eep1ess/workspace/lua/echeckers/ui/functions/UI.update_board.lua
 --- Center text ignoring ANSI escape codes
----@param text string Text with possible ANSI codes
----@param width number Desired width
----@return string Centered text
+---@param text string
+---@param width number
+---@return string
 local function center_ansi(text, width)
     text = tostring(text)
     local clean = text:gsub('\27%[[%d;]*m', '')
     local padding = width - #clean
     if padding <= 0 then return text end
     local left = math.floor(padding / 2)
-    local right = padding - left
-    return string.rep(' ', left) .. text .. string.rep(' ', right)
+    return string.rep(' ', left) .. text .. string.rep(' ', padding - left)
 end
 
 --- Render board with styling
@@ -1719,7 +1718,6 @@ local function _TUI_update_board(board)
     local TRASH_COLOR = 94
     local CELL_SIZES = {14, 14, 14, 16, 16}
 
-    -- Cell color configuration: CELL_COLORS[row][col] = color_code
     local CELL_COLORS = {
         [1] = {nil, nil, nil, DECK_COLOR, TRASH_COLOR},
         [2] = {nil, nil, nil, HEALTH_COLOR, BIOMATTER_COLOR},
@@ -1729,163 +1727,118 @@ local function _TUI_update_board(board)
     }
 
     local grey_bg = '\27[48;5;235m'
+    local sep_bg, sep_fg = build_cell_colors(GREY_ROW3)
+    local separator = sep_bg .. sep_fg .. ' ' .. ANSI_RESET
 
-    --- Build ANSI colored text
-    ---@param text string
-    ---@param color number
-    ---@return string
     local function build_colored_text(text, color)
         local bg, fg = build_cell_colors(color)
         return bg .. fg .. text .. ANSI_RESET
     end
 
-    --- Get cell color for special cells (Deck, Trash, LIFE, BIOMATTER)
-    local function get_cell_color(row, col)
-        return CELL_COLORS[row] and CELL_COLORS[row][col]
-    end
-
-    --- Extract biome from cell {biome, index, card}
-    local function get_biome(cell)
-        if type(cell) ~= 'table' then return nil end
-        -- Cell structure: {biome_data, index, card}
-        for i = 1, #cell do
-            local v = cell[i]
-            if type(v) == 'table' and v.name then
-                return v
-            end
-        end
-        return nil
-    end
-
-    --- Check if cell contains a card
-    local function get_card(cell)
-        if type(cell) ~= 'table' then return nil end
-        -- Cell structure: {biome_data, index, card}
-        for i = 1, #cell do
-            local v = cell[i]
-            if type(v) == 'table' and v.emoji then
-                return v
-            end
-        end
-        return nil
-    end
-
-    --- Render a single cell
-    local function render_cell(row, col, cell)
-        local cell_size = CELL_SIZES[col]
-        local biome = get_biome(cell)
-        local card = get_card(cell)
-        local color
-
-        -- Priority: biome color > special cell color (Deck, Trash, etc.)
-        if biome and biome.color then
-            color = biome.color
-        else
-            color = get_cell_color(row, col)
-        end
-
-        -- Card rendering: emoji centered with grey background
-        if card and card.name then
-            local emoji = format_emoji_field(card.emoji or card.name)
-            local padding = cell_size - 2
-            local left = math.floor(padding / 2)
-            local right = padding - left
-
-            if color then
-                local bg, fg = build_cell_colors(color)
-                return bg .. fg .. string.rep(' ', left) ..
-                       grey_bg .. emoji .. ANSI_RESET ..
-                       bg .. fg .. string.rep(' ', right) .. ANSI_RESET
-            end
-            return grey_bg .. emoji .. ANSI_RESET
-        end
-
-        -- Biome rendering
-        local display_text
-        if biome and biome.name then
-            display_text = center_ansi(biome.name, cell_size)
-        elseif type(cell) == 'table' then
-            -- Non-biome table cell (LIFE, BIOMATTER, etc.)
-            local value
-            for i = 1, #cell do
-                local v = cell[i]
-                if type(v) ~= 'table' or not v.name then
-                    value = v
-                    break
-                end
-            end
-            display_text = center_ansi(value or tostring(cell), cell_size)
-        else
-            display_text = center_ansi(cell or '', cell_size)
-        end
-
-        local result
-        if color then
-            result = build_colored_text(display_text, color)
-        else
-            result = display_text .. ANSI_RESET
-        end
-        return result
-    end
-
-    -- Board structure mapping:
-    -- board[1] = {biomes2[1-3], Deck, Trash, biomes2[4-6], LIFE, BIOMATTER} (10 cells)
-    -- board[2] = {'', 'SETUP', '', '', ''} (5 cells)
-    -- board[3] = {biomes1[1-3], LIFE, BIOMATTER, biomes1[4-6], Deck, Trash} (10 cells)
-    --
-    -- Visual output (5 rows x 5 cols):
-    -- Row 1: board[1][1-5]   -> biomes2[1-3], Deck, Trash
-    -- Row 2: board[1][6-10]  -> biomes2[4-6], LIFE, BIOMATTER
-    -- Row 3: board[2][1-5]   -> SETUP row
-    -- Row 4: board[3][1-5]   -> biomes1[1-3], LIFE, BIOMATTER
-    -- Row 5: board[3][6-10]  -> biomes1[4-6], Deck, Trash
-
     local VISUAL_MAP = {
-        [1] = {board_row = 1, cols = {1, 2, 3, 4, 5}},
-        [2] = {board_row = 1, cols = {6, 7, 8, 9, 10}},
-        [3] = {board_row = 2, cols = {1, 2, 3, 4, 5}},
-        [4] = {board_row = 3, cols = {1, 2, 3, 4, 5}},
-        [5] = {board_row = 3, cols = {6, 7, 8, 9, 10}},
+        [1] = {layout_row = 1, cols = {1, 2, 3, 4, 5}},
+        [2] = {layout_row = 1, cols = {6, 7, 8, 9, 10}},
+        [3] = {layout_row = 2, cols = {1, 2, 3, 4, 5}},
+        [4] = {layout_row = 3, cols = {1, 2, 3, 4, 5}},
+        [5] = {layout_row = 3, cols = {6, 7, 8, 9, 10}},
     }
 
-    local lines = {}
-    local COL_COUNT = 5
-    local VISUAL_ROWS = 5
-
-    -- Pre-calculate board width
     local board_width = 2
-    for i = 1, COL_COUNT do
+    for i = 1, 5 do
         board_width = board_width + CELL_SIZES[i]
     end
 
-    local sep_bg, sep_fg = build_cell_colors(GREY_ROW3)
-    local separator = sep_bg .. sep_fg .. ' ' .. ANSI_RESET
-
     local border_line = sep_bg .. sep_fg .. string.rep(' ', board_width) .. ANSI_RESET
-    lines[1] = border_line
+    local lines = {border_line}
 
-    for visual_row = 1, VISUAL_ROWS do
+    -- Cell content extraction: returns {text, color, is_card}
+    local cell_extractors = {
+        -- Animal on biome: {def, animal}
+        function(cell)
+            if cell.animal and cell.animal.name then
+                return format_emoji_field(cell.animal.emoji or cell.animal.name),
+                       cell.def.color, true
+            end
+        end,
+        -- Biome definition
+        function(cell)
+            if cell.def and cell.def.name then
+                return center_ansi(cell.def.name, CELL_SIZES[1]), cell.def.color, false
+            end
+        end,
+        -- Empty/occupied state
+        function(cell)
+            if cell.def then
+                return center_ansi(cell.animal and 'occupied' or 'empty', CELL_SIZES[1]), nil, false
+            end
+        end,
+        -- Plain table with name (LIFE, BIOMATTER, etc.)
+        function(cell)
+            if cell.name then
+                return center_ansi(cell.name, CELL_SIZES[1]), nil, false
+            end
+        end,
+    }
+
+    local function get_cell_content(cell, row, col)
+        -- String cells: use CELL_COLORS
+        if type(cell) ~= 'table' then
+            return center_ansi(cell or '', CELL_SIZES[col]), CELL_COLORS[row][col], false
+        end
+
+        -- Table cells: use extractors
+        for _, extractor in ipairs(cell_extractors) do
+            local text, color, is_card = extractor(cell)
+            if text then return text, color, is_card end
+        end
+
+        return center_ansi(tostring(cell), CELL_SIZES[col]), nil, false
+    end
+
+    local function render_cell(row, col, cell)
+        local text, color, is_card = get_cell_content(cell, row, col)
+        local cell_size = CELL_SIZES[col]
+
+        if is_card then
+            local padding = cell_size - 2
+            local left = math.floor(padding / 2)
+            if color then
+                local bg, fg = build_cell_colors(color)
+                return bg .. fg .. string.rep(' ', left) .. grey_bg .. text .. ANSI_RESET ..
+                       bg .. fg .. string.rep(' ', padding - left) .. ANSI_RESET
+            end
+            return grey_bg .. text .. ANSI_RESET
+        end
+
+        if color then
+            return build_colored_text(text, color)
+        end
+
+        return text .. ANSI_RESET
+    end
+
+    local layout = board.layout or board
+
+    for visual_row = 1, 5 do
         local row_parts = {separator}
         local mapping = VISUAL_MAP[visual_row]
-        local board_row = board[mapping.board_row]
+        local layout_row = layout[mapping.layout_row]
 
-        for col = 1, COL_COUNT do
-            local board_col = mapping.cols[col]
-            local cell = board_row and board_row[board_col]
+        for col = 1, 5 do
+            local cell = layout_row and layout_row[mapping.cols[col]]
             row_parts[col + 1] = render_cell(visual_row, col, cell)
         end
 
-        row_parts[COL_COUNT + 2] = separator
+        row_parts[7] = separator
         lines[visual_row + 1] = table.concat(row_parts)
     end
 
-    lines[VISUAL_ROWS + 2] = border_line
-
+    lines[7] = border_line
     print('\n' .. table.concat(lines, '\n') .. '\n')
 end
 
 ---@diagnostic disable-next-line: duplicate-set-field
-UI.update_board = function (board)
+UI.update_board = function(board)
     if BUILD == 'TUI' then
         _TUI_update_board(board)
     end
@@ -2058,6 +2011,235 @@ local _draw_card = function(turn)
         Decks[turn][deck_size] = nil
     end
 end
+-- /home/s1eep1ess/workspace/lua/echeckers/board/board.lua
+--- Board module - manages board structure and layout
+-- Separates biome data from visual layout
+
+BoardModule = {}
+
+--- Initialize board structure for basic mode
+---@param biomes_p1 table Player 1's biomes (array of 6)
+---@param biomes_p2 table Player 2's biomes (array of 6)
+---@return table Board instance
+function BoardModule.init(biomes_p1, biomes_p2)
+    local board = {
+        -- Biome data per player (game logic source of truth)
+        biomes = {
+            [1] = {},  -- Player 1
+            [2] = {},  -- Player 2
+        },
+
+        -- Visual layout for UI rendering
+        layout = {
+            [1] = {},  -- Player 2 row (top)
+            [2] = {},  -- Middle zone
+            [3] = {},  -- Player 1 row (bottom)
+        },
+    }
+
+    -- Initialize biomes with animal slots
+    for i = 1, 6 do
+        board.biomes[1][i] = { def = biomes_p1[i], animal = nil }
+        board.biomes[2][i] = { def = biomes_p2[i], animal = nil }
+    end
+
+    -- Build visual layout from biomes
+    -- Layout: [biome1-3, Deck, Trash, biome4-6, LIFE, BIOMATTER]
+    board.layout[1] = {
+        board.biomes[2][1], board.biomes[2][2], board.biomes[2][3],
+        'Deck', 'Trash',
+        board.biomes[2][4], board.biomes[2][5], board.biomes[2][6],
+        'LIFE', 'BIOMATTER'
+    }
+
+    board.layout[2] = { '', 'SETUP', '', '', '' }
+
+    board.layout[3] = {
+        board.biomes[1][1], board.biomes[1][2], board.biomes[1][3],
+        'LIFE', 'BIOMATTER',
+        board.biomes[1][4], board.biomes[1][5], board.biomes[1][6],
+        'Deck', 'Trash'
+    }
+
+    return board
+end
+
+--- Get biome by player and index
+---@param player number (1 or 2)
+---@param index number (1-6)
+---@return table|nil Biome {def, animal}
+function BoardModule.get_biome(player, index)
+    if Board.biomes and Board.biomes[player] then
+        return Board.biomes[player][index]
+    end
+    return nil
+end
+
+--- Get player's visual row (1 for P2, 3 for P1)
+---@param player number
+---@return number
+function BoardModule.get_row(player)
+    return (player == 1) and 3 or 1
+end
+
+--- Get column index for biome in layout
+---@param index number (1-6)
+---@return number Column (1-3 or 6-8)
+function BoardModule.get_column(index)
+    if index <= 3 then
+        return index
+    else
+        return index + 2  -- Skip Deck/Trash at 4,5
+    end
+end
+
+--- Sync layout with biome changes
+function BoardModule.sync()
+    if not Board.biomes then return end
+    for i = 1, 6 do
+        local col = BoardModule.get_column(i)
+        Board.layout[1][col] = Board.biomes[2][i]
+        Board.layout[3][col] = Board.biomes[1][i]
+    end
+end
+
+-- /home/s1eep1ess/workspace/lua/echeckers/board/biomes.lua
+--- Biome operations module
+-- Direct operations on biome animal slots
+
+BiomesOps = {}
+
+--- Check if biome has no animal
+---@param player number (1 or 2)
+---@param index number (1-6)
+---@return boolean
+function BiomesOps.is_empty(player, index)
+    local biome = BoardModule.get_biome(player, index)
+    return not biome or biome.animal == nil
+end
+
+--- Place animal on biome
+---@param player number (1 or 2)
+---@param index number (1-6)
+---@param card table
+function BiomesOps.set_animal(player, index, card)
+    local biome = BoardModule.get_biome(player, index)
+    if biome then
+        biome.animal = card
+        BoardModule.sync()
+    end
+end
+
+--- Remove animal from biome
+---@param player number (1 or 2)
+---@param index number (1-6)
+---@return table|nil Removed card
+function BiomesOps.remove_animal(player, index)
+    local biome = BoardModule.get_biome(player, index)
+    if not biome or not biome.animal then return nil end
+
+    local removed = biome.animal
+    biome.animal = nil
+    BoardModule.sync()
+    return removed
+end
+
+--- Swap two biomes
+---@param player number (1 or 2)
+---@param from number (1-6)
+---@param to number (1-6)
+function BiomesOps.move(player, from, to)
+    if from == to or not Board.biomes[player] then return end
+    Board.biomes[player][from], Board.biomes[player][to] =
+    Board.biomes[player][to], Board.biomes[player][from]
+    BoardModule.sync()
+end
+
+--- Get animal on biome
+---@param player number (1 or 2)
+---@param index number (1-6)
+---@return table|nil
+function BiomesOps.get_animal(player, index)
+    local biome = BoardModule.get_biome(player, index)
+    return biome and biome.animal
+end
+
+--- Get biome definition
+---@param player number (1 or 2)
+---@param index number (1-6)
+---@return table|nil
+function BiomesOps.get_def(player, index)
+    local biome = BoardModule.get_biome(player, index)
+    return biome and biome.def
+end
+
+-- /home/s1eep1ess/workspace/lua/echeckers/board/validation.lua
+--- Validation for board operations
+
+Validation = {}
+
+function Validation.valid_biome_index(index)
+    return type(index) == 'number' and index >= 1 and index <= 6
+end
+
+function Validation.valid_player(player)
+    return type(player) == 'number' and (player == 1 or player == 2)
+end
+
+function Validation.validate_biome_move(player, from, to)
+    if not Validation.valid_player(player) then
+        return false, 'Invalid player'
+    end
+    if not Validation.valid_biome_index(from) then
+        return false, 'Invalid source biome (1-6)'
+    end
+    if not Validation.valid_biome_index(to) then
+        return false, 'Invalid destination biome (1-6)'
+    end
+    if from == to then
+        return false, 'Source and destination must differ'
+    end
+    if not Board.biomes or not Board.biomes[player] then
+        return false, 'Board not initialized'
+    end
+    return true
+end
+
+function Validation.validate_set_animal(player, index, hand, hand_index)
+    if not Validation.valid_player(player) then
+        return false, 'Invalid player'
+    end
+    if not Validation.valid_biome_index(index) then
+        return false, 'Invalid biome index (1-6)'
+    end
+    if not hand or not hand[hand_index] then
+        return false, 'Invalid card in hand'
+    end
+    if not Board.biomes or not Board.biomes[player] then
+        return false, 'Board not initialized'
+    end
+    if not BiomesOps.is_empty(player, index) then
+        return false, 'Biome already occupied'
+    end
+    return true
+end
+
+function Validation.validate_remove_animal(player, index)
+    if not Validation.valid_player(player) then
+        return false, 'Invalid player'
+    end
+    if not Validation.valid_biome_index(index) then
+        return false, 'Invalid biome index (1-6)'
+    end
+    if not Board.biomes or not Board.biomes[player] then
+        return false, 'Board not initialized'
+    end
+    if BiomesOps.is_empty(player, index) then
+        return false, 'No animal on biome'
+    end
+    return true
+end
+
 -- /home/s1eep1ess/workspace/lua/echeckers/phases/0_setup.lua
 --[[
 This file should be called when duel starts
@@ -2078,7 +2260,7 @@ local function _setup_biomes()
 end
 
 local function _setup_decks()
-    Decks={true,true}
+    Decks = { true, true }
     Decks[1] = generate_random_deck()
     Decks[2] = generate_random_deck()
     --[[
@@ -2097,30 +2279,20 @@ end
 local function _setup_starter()
     if math.random(1, 2) == 1 then
         UI.display('Player 1 goes 1st')
-        Player_turn=1
+        Player_turn = 1
         return
     end
 
     UI.display('Player 2 goes 1st')
-    Player_turn=2
+    Player_turn = 2
 end
 
 
 -- Board should be global
 local function _setup_board(MODE)
     if MODE == 'basic' then
-        Board = {}
-
-        Board[1] = {{Biomes[2][1], 1}, {Biomes[2][2], 2},
-                    {Biomes[2][3], 3}, 'Deck', 'Trash',
-                    {Biomes[2][4], 4}, {Biomes[2][5], 5},
-                    {Biomes[2][6], 6}, LIFE, BIOMATTER}
-        Board[2] = {'', 'SETUP', '','' , ''}
-        Board[3] = {{Biomes[1][1], 1}, {Biomes[1][2], 2},
-                    {Biomes[1][3], 3}, LIFE, BIOMATTER,
-                    {Biomes[1][4], 4}, {Biomes[1][5], 5},
-                    {Biomes[1][6], 6}, 'Deck', 'Trash'
-                    }
+        -- Initialize board with new structure
+        Board = BoardModule.init(Biomes[1], Biomes[2])
     end
 end
 
@@ -2145,8 +2317,8 @@ local function _setup_ui()
     UI.update_hand(Hands[1])
 end
 
-local _setup_trash = function ()
-    Trashs = {true, true}
+local _setup_trash = function()
+    Trashs = { true, true }
     Trashs[1] = {}
     Trashs[2] = {}
 end
@@ -2168,8 +2340,8 @@ local function setup()
     if MODE == 'advanced' then
         return
     end
-
 end
+
 -- /home/s1eep1ess/workspace/lua/echeckers/phases/1_draw_phase.lua
 local _update_ui = function ()
     -- Each player should not see the other hand
@@ -2197,69 +2369,81 @@ local draw = function ()
     end
 end
 -- /home/s1eep1ess/workspace/lua/echeckers/phases/2_standby_phase.lua
-local _set_animal = function ()
-    -- input 1
-    local hand_index = 1
-    -- input 2 (must be between 1 and 6)
-    local biome_index = 1
+local _set_animal = function(hand_index, biome_index)
+    hand_index = hand_index or 1
+    biome_index = biome_index or 1
 
     local turn = Player_turn
     local hand = Hands[turn]
     local len = #hand
     local card = hand[hand_index]
 
-    -- Board row and column mapping based on player turn
-    local board_row = (turn == 1) and 3 or 1
-    local column = (biome_index <= 3) and biome_index or (biome_index + 2)
+    local valid, err = Validation.validate_set_animal(turn, biome_index, hand, hand_index)
+    if not valid then
+        UI.display('Invalid move: ' .. err)
+        return false
+    end
 
-    -- Place the card on the board, keeping the biome structure {biome, index, card}
-    local old_cell = Board[board_row][column]
-    Board[board_row][column] = {old_cell[1], old_cell[2], card}
+    BiomesOps.set_animal(turn, biome_index, card)
 
-    -- Remove the card from hand
     if hand_index < len then
         hand[hand_index] = hand[len]
     end
     hand[len] = nil
+
+    return true
 end
 
-local _remove_animal = function ()
-    -- input 1 (must be between 1 and 6)
-    local biome_index = 1
+local _remove_animal = function(biome_index)
+    biome_index = biome_index or 1
 
     local turn = Player_turn
     local hand = Hands[turn]
 
-    -- Check if there is an animal on the biome
-    -- Remove it
-    
+    local valid, err = Validation.validate_remove_animal(turn, biome_index)
+    if not valid then
+        UI.display('Invalid move: ' .. err)
+        return false
+    end
+
+    local removed = BiomesOps.remove_animal(turn, biome_index)
+    if removed then
+        hand[#hand + 1] = removed
+    end
+
+    return true
 end
 
-
-local _move_animal = function ()
+local _move_animal = function(from_biome_index, to_biome_index)
     return 3
 end
 
-local _move_biome = function ()
-    return 4
+local _move_biome = function(from_biome_index, to_biome_index)
+    from_biome_index = from_biome_index or 1
+    to_biome_index = to_biome_index or 2
+
+    local turn = Player_turn
+
+    local valid, err = Validation.validate_biome_move(turn, from_biome_index, to_biome_index)
+    if not valid then
+        UI.display('Invalid move: ' .. err)
+        return false
+    end
+
+    return BiomesOps.move(turn, from_biome_index, to_biome_index)
 end
 
-local _update_ui = function ()
-    -- Each player should not see the other hand
+local _update_ui = function()
     UI.update_hand(Hands[2], 'hidden')
     UI.update_board(Board)
     UI.update_hand(Hands[1])
 end
 
-local standby = function ()
-    local actions = { _set_animal,
-                      _remove_animal,
-                      _move_animal,
-                      _move_biome}
+local standby = function()
+    local actions = { _set_animal, _remove_animal, _move_animal, _move_biome }
     local input
 
     if MODE == 'basic' then
-        -- local input = _TUI_input({"number", "Set mode"}, false)
         input = 1
     end
 
@@ -2268,6 +2452,7 @@ local standby = function ()
     end
     _update_ui()
 end
+
 -- /home/s1eep1ess/workspace/lua/echeckers/battle.lua
 local _start_battle = function ()
     UI.display('Setting up:')
