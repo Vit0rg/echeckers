@@ -3,12 +3,13 @@
 # Builds main game and battle module separately
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"  # Go to project root
+cd "$PROJECT_ROOT"
 
 # Build configuration
 declare -A BUILDS=(
-    ["main"]="build_main.txt processed_script.lua"
-    ["battle"]="build_battle.txt battle/processed_battle.lua"
+    ["main"]="build_systems/build_main.txt processed_script.lua"
+    ["battle"]="build_systems/build_battle.txt battle/processed_battle.lua"
 )
 
 build_failed=0
@@ -17,23 +18,23 @@ build_step() {
     local name="$1"
     local config_file="$2"
     local target="$3"
-    
+
     echo "========================================"
     echo "BUILD STEP: $name"
     echo "Config: $config_file -> Output: $target"
     echo "========================================"
-    
+
     if [[ ! -f "$config_file" ]]; then
         echo "ERROR: Config file not found: $config_file"
         return 1
     fi
-    
+
     local files_to_process=()
-    
+
     while IFS= read -r entry || [[ -n "$entry" ]]; do
         [[ -z "$entry" || "$entry" =~ ^# ]] && continue
-        
-        local full_path="$SCRIPT_DIR/$entry"
+
+        local full_path="$PROJECT_ROOT/$entry"
         
         if [[ -d "$full_path" ]]; then
             while IFS= read -r file; do

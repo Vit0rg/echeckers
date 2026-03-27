@@ -1,4 +1,9 @@
 
+-- /home/s1eep1ess/workspace/lua/echeckers/settings/configuration.lua
+BUILD = 'TUI'
+MODE = 'basic'
+UI = {}
+math.randomseed(os.time())
 -- /home/s1eep1ess/workspace/lua/echeckers/battle/assets/animals.lua
 -- local animals = {}
 
@@ -1961,11 +1966,15 @@ local function setup()
     end
 
     if MODE == 'elemental' then
-        return
+        return 1
+    end
+
+    if MODE == 'astrological' then
+        return 2
     end
 
     if MODE == 'advanced' then
-        return
+        return 3
     end
 end
 

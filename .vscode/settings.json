@@ -1,7 +1,8 @@
 {
     "Lua.diagnostics.disable": [
         "unused-function",
-        "undefined-global"
+        "undefined-global",
+        "duplicate-set-field"
     ],
     "Lua.diagnostics.globals": [
         "_draw_card",

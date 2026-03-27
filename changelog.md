@@ -243,3 +243,60 @@ All notable changes to this project will be documented in this file.
   - `ui/functions/tui_colors.lua`
   - `ui/functions/UI.input.lua`
   - `phases/2_standby_phase.lua`
+
+### Step 7 - Project Structure Reorganization and Build System Update
+
+### Changed
+- **Project Structure** - Reorganized directory layout for better separation of concerns:
+  - `settings/` - Configuration and game mode definitions
+    - `settings/configuration.lua` (moved from root)
+    - `settings/modes/basic.lua` (moved from `modes/`)
+    - `settings/player_options.lua` (new)
+  - `menus/` - Menu system files
+    - `menus/main_menu.lua`
+  - `utils/` - Utility functions organized by type:
+    - `utils/string/` - String utilities (`string.center.lua`, `string.split.lua`, `string.replace.lua`, `char_width.lua`)
+    - `utils/table/` - Table utilities (`table.print.lua`, `table.copy.lua`, `table.unpack.lua`)
+  - `events/` - Event handlers (unchanged location)
+  - `src/` - Source initialization files (unchanged location)
+  - `ui/` - UI files (`ui/main_menu.lua`)
+  - `battle/` - Battle gameplay module (unchanged)
+
+- **Build System** (`build_systems/`)
+  - Updated `build_system` (Bash) to navigate to project root before building
+  - Updated `build.ps1` (PowerShell) to navigate to project root before building
+  - Updated `build_main.txt` with new file paths:
+    - Added `settings/`, `menus/`, `utils/string/`, `utils/table/` paths
+    - Added new utility files: `char_width.lua`, `string.replace.lua`, `table.unpack.lua`
+    - Added `menus/main_menu.lua` and `ui/main_menu.lua`
+  - Updated `build_battle.txt` to include `settings/configuration.lua`
+
+- **Build Configuration Files**
+  - Removed `build_systems/build_files.txt` (obsolete, replaced by `build_main.txt` and `build_battle.txt`)
+
+### Benefits
+- **Better organization** - Configuration and settings separated from game logic
+- **Clearer structure** - Utils organized by type (string vs table)
+- **Scalable** - Easier to add new utilities and settings
+- **Maintainable** - Related files grouped together
+
+### Review Summary
+
+**Code Review Completed** - 17 issues identified across 4 dimensions:
+
+**Critical (Need to Fix):**
+- Priority 1: Input system broken (`UI.input()` calls wrong function)
+- Priority 2: No turn switching logic (game cannot progress)
+- Priority 3: Git state broken (reorganization not committed)
+- Priority 4: Circular reference crash risk (`table.copy()`)
+- Priority 5: String replacement bug (double-escaping)
+- Priority 6: Inconsistent return values (`setup()`)
+
+**Suggestions (Recommended):** 8 issues (Priority 7-14)
+- Missing nil checks, input validation, duplicated logic, obsolete files
+
+**Nice to Have (Optional):** 3 issues (Priority 15-17)
+- Outdated comments, random seed placement, build artifacts in repo
+
+**Verdict:** Request Changes - Critical issues prevent game from functioning correctly.
+See `reviews.md` for detailed findings and fix recommendations.

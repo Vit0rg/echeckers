@@ -1,0 +1,25 @@
+b = biome
+p = player
+d = deck
+t = trash
+l = life
+e = biomatter/energy
+T = turn
+
+--
+When empty:
+
+[][b1 p2][b2 p2][b3 p2][ ][d p2][t p2]
+[][b4 p2][b5 p2][b6 p2][ ][l p2][e p2]
+[           T                        ]
+[][b4 p1][b5 p1][b6 p1][ ][l p1][e p1]
+[][b1 p1][b2 p1][b3 p1][ ][d p1][t p1]
+
+--
+When a card is set (example, card set on biome 1 by player 2):
+
+[][card][b2 p2][b3 p2][ ][d p2][t p2]
+[][b4 p2][b5 p2][b6 p2][ ][l p2][e p2]
+[           T                        ]
+[][b4 p1][b5 p1][b6 p1][ ][l p1][e p1]
+[][b1 p1][b2 p1][b3 p1][ ][d p1][t p1]

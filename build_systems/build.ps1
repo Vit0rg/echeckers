@@ -2,12 +2,13 @@
 # Builds main game and battle module separately
 
 $scriptDir = Split-Path $MyInvocation.MyCommand.Path -Parent
-Set-Location $scriptDir
+$projectRoot = "$scriptDir\.."
+Set-Location $projectRoot  # Go to project root
 
 # Build configurations
 $builds = @{
-    "main"   = @{ Config = "build_main.txt"; Target = "processed_script.lua" }
-    "battle" = @{ Config = "build_battle.txt"; Target = "battle\processed_battle.lua" }
+    "main"   = @{ Config = "build_systems/build_main.txt"; Target = "processed_script.lua" }
+    "battle" = @{ Config = "build_systems/build_battle.txt"; Target = "battle\processed_battle.lua" }
 }
 
 $buildFailed = $false
@@ -18,28 +19,28 @@ function Build-Step {
         [string]$ConfigFile,
         [string]$Target
     )
-    
+
     Write-Output "========================================"
     Write-Output "BUILD STEP: $Name"
     Write-Output "Config: $ConfigFile -> Output: $Target"
     Write-Output "========================================"
-    
+
     if (-not (Test-Path $ConfigFile -PathType Leaf)) {
         Write-Output "ERROR: Config file not found: $ConfigFile"
         return $false
     }
-    
+
     $filesToProcess = @()
     $entries = Get-Content -Path $ConfigFile | Where-Object { $_ -and -not $_.StartsWith("#") }
-    
+
     foreach ($entry in $entries) {
         $entry = $entry.Trim()
-        
+
         if ([string]::IsNullOrWhiteSpace($entry)) {
             continue
         }
-        
-        $fullPath = Join-Path -Path $scriptDir -ChildPath $entry
+
+        $fullPath = Join-Path -Path $projectRoot -ChildPath $entry
         
         if (Test-Path $fullPath -PathType Container) {
             $files = Get-ChildItem -Path $fullPath -File -Filter "*.lua" -Recurse

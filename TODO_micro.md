@@ -24,7 +24,7 @@
 [OK] Create Standby (set animals on board, apply specials)
     -- Implemented: _set_animal(), _remove_animal(), _move_animal(), _move_biome()
     -- Input integration pending (Step 10)
-
+    
 ## Step 8:
 [] Create Battle logic and ui
 

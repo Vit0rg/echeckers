@@ -1,6 +1,7 @@
 # Battle module build configuration
 # All battle gameplay related files
 
+settings/configuration.lua
 battle/assets/animals.lua
 battle/assets/biomes.lua
 battle/assets/buildings.lua
