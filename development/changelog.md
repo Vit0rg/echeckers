@@ -300,3 +300,49 @@ All notable changes to this project will be documented in this file.
 
 **Verdict:** Request Changes - Critical issues prevent game from functioning correctly.
 See `reviews.md` for detailed findings and fix recommendations.
+
+### Step 8 - Source Code and Development Separation
+
+### Changed
+- **Project Structure** - Separated source code from development files:
+  - `game/` - All runtime source code (assets, battle, events, menus, settings, src, ui, utils)
+  - `development/` - Build tools, documentation, and development artifacts
+  - Clear boundary between deployable and non-deployable files
+
+- **Build System** (`development/build_systems/`)
+  - Updated `build_system` (Bash) to navigate two levels up to project root
+  - Updated `build.ps1` (PowerShell) to navigate two levels up to project root
+  - Updated `build_main.txt` paths to use `game/` prefix:
+    - `settings/` → `game/settings/`
+    - `utils/` → `game/utils/`
+    - `ui/` → `game/ui/`
+    - `menus/` → `game/menus/`
+    - `events/` → `game/events/`
+    - `src/` → `game/src/`
+  - Updated `build_battle.txt` paths to use `game/` prefix:
+    - All battle module paths now prefixed with `game/battle/`
+
+- **Build Outputs**
+  - `processed_script.lua` → `game/processed_script.lua`
+  - `battle/processed_battle.lua` → `game/battle/processed_battle.lua`
+
+- **Documentation**
+  - Created `development/project_architecture.md` - Comprehensive architecture documentation
+  - Updated `development/TODO_macro.md` - Added Step 8 tasks
+  - Updated `development/changelog.md` - This entry
+
+### Benefits
+- **Clean separation** - Development tools don't clutter source tree
+- **Easier deployment** - Only `game/` folder needed for distribution
+- **Better organization** - Clear boundary between code and tools
+- **Simplified CI/CD** - Build artifacts stay within `game/` folder
+- **Scalable structure** - Easy to add new development tools without affecting source
+
+### File Movements
+- `build_systems/` → `development/build_systems/`
+- `changelog.md` → `development/changelog.md`
+- `reviews.md` → `development/reviews.md`
+- `TODO_macro.md` → `development/TODO_macro.md`
+- `TODO_micro.md` → `development/TODO_micro.md`
+- `sketches/` → `development/sketches/`
+- All source code → `game/` folder

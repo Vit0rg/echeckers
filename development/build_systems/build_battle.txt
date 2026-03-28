@@ -1,0 +1,29 @@
+# Battle module build configuration
+# All battle gameplay related files
+
+game/settings/configuration.lua
+game/assets/animals.lua
+game/assets/biomes.lua
+game/assets/buildings.lua
+game/assets/items.lua
+game/battle/functions/random_deck_generator.lua
+game/battle/functions/get_random_biomes.lua
+game/battle/functions/card_processor.lua
+game/battle/functions/draw_card.lua
+game/battle/functions/select_deck.lua
+game/battle/functions/update_players.lua
+game/battle/board/board.lua
+game/battle/board/biomes.lua
+game/battle/validation/2_standby_validation.lua
+game/battle/phases/0_setup.lua
+game/battle/phases/1_draw_phase.lua
+game/battle/phases/2_standby_phase.lua
+game/battle/phases/3_battle_phase.lua
+game/battle/phases/4_end_phase.lua
+game/battle/ui/tui_colors.lua
+game/battle/ui/UI.display.lua
+game/battle/ui/UI.input.lua
+game/battle/ui/UI.update_board.lua
+game/battle/ui/UI.update_hand.lua
+game/battle/decks/default.lua
+game/battle/battle.lua

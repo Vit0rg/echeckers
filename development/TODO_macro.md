@@ -19,5 +19,10 @@ Step 6:
 
 Step 7:
 [x] Update build system for new project structure
+[x] Code review and documentation (reviews.md)
+
+Step 8:
+[x] Separate source code (game/) from development files (development/)
+[x] Update build system to use game/ folder exclusively
 [] Implement remaining battle phase logic
 [] Full integration testing

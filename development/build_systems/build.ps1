@@ -2,13 +2,13 @@
 # Builds main game and battle module separately
 
 $scriptDir = Split-Path $MyInvocation.MyCommand.Path -Parent
-$projectRoot = "$scriptDir\.."
+$projectRoot = "$scriptDir\..\.."
 Set-Location $projectRoot  # Go to project root
 
 # Build configurations
 $builds = @{
-    "main"   = @{ Config = "build_systems/build_main.txt"; Target = "processed_script.lua" }
-    "battle" = @{ Config = "build_systems/build_battle.txt"; Target = "battle\processed_battle.lua" }
+    "main"   = @{ Config = "development/build_systems/build_main.txt"; Target = "game/processed_script.lua" }
+    "battle" = @{ Config = "development/build_systems/build_battle.txt"; Target = "game/battle/processed_battle.lua" }
 }
 
 $buildFailed = $false

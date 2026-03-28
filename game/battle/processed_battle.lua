@@ -1,10 +1,10 @@
 
--- /home/s1eep1ess/workspace/lua/echeckers/settings/configuration.lua
+-- /home/s1eep1ess/workspace/lua/echeckers/game/settings/configuration.lua
 BUILD = 'TUI'
 MODE = 'basic'
 UI = {}
 math.randomseed(os.time())
--- /home/s1eep1ess/workspace/lua/echeckers/battle/assets/animals.lua
+-- /home/s1eep1ess/workspace/lua/echeckers/game/assets/animals.lua
 -- local animals = {}
 
 -- Base HP multiplier factor (can be adjusted based on player life)
@@ -1305,7 +1305,7 @@ local base_animals_list = {
 }
 
 local animals = base_animals_list
--- /home/s1eep1ess/workspace/lua/echeckers/battle/assets/biomes.lua
+-- /home/s1eep1ess/workspace/lua/echeckers/game/assets/biomes.lua
 local biomes = {
     [1] = {
         name = 'Desert',
@@ -1360,7 +1360,7 @@ local implemented_biomes = {
     'Jungle'
 }
 
--- /home/s1eep1ess/workspace/lua/echeckers/battle/assets/buildings.lua
+-- /home/s1eep1ess/workspace/lua/echeckers/game/assets/buildings.lua
 -- List of implemented buildings
 local implemented_buildings = {
     "Hospital",
@@ -1540,11 +1540,11 @@ special_buildings[3] = {
     special = "+25% Heal all",
 }
 
--- /home/s1eep1ess/workspace/lua/echeckers/battle/assets/items.lua
+-- /home/s1eep1ess/workspace/lua/echeckers/game/assets/items.lua
 --food
 --weapons
 -- anything that can change attack, speed or defense
--- /home/s1eep1ess/workspace/lua/echeckers/battle/functions/random_deck_generator.lua
+-- /home/s1eep1ess/workspace/lua/echeckers/game/battle/functions/random_deck_generator.lua
 local random = math.random
 
 local function generate_random_deck()
@@ -1560,7 +1560,7 @@ local function generate_random_deck()
 end
 
 
--- /home/s1eep1ess/workspace/lua/echeckers/battle/functions/get_random_biomes.lua
+-- /home/s1eep1ess/workspace/lua/echeckers/game/battle/functions/get_random_biomes.lua
 local random = math.random
 
 local function get_random_biomes()
@@ -1575,7 +1575,7 @@ local function get_random_biomes()
 
     return _selected_biomes
 end
--- /home/s1eep1ess/workspace/lua/echeckers/battle/functions/card_processor.lua
+-- /home/s1eep1ess/workspace/lua/echeckers/game/battle/functions/card_processor.lua
 --[[
     {
     name = "Turtle",
@@ -1603,7 +1603,7 @@ local process_card = function (card)
     weakness = card.weakness
   }
 end
--- /home/s1eep1ess/workspace/lua/echeckers/battle/functions/draw_card.lua
+-- /home/s1eep1ess/workspace/lua/echeckers/game/battle/functions/draw_card.lua
 local _draw_card = function(turn)
     if #Decks[turn] == 0 then
         UI.display('No cards on deck, skipping')
@@ -1621,12 +1621,12 @@ local _draw_card = function(turn)
         Decks[turn][deck_size] = nil
     end
 end
--- /home/s1eep1ess/workspace/lua/echeckers/battle/functions/select_deck.lua
+-- /home/s1eep1ess/workspace/lua/echeckers/game/battle/functions/select_deck.lua
 
--- /home/s1eep1ess/workspace/lua/echeckers/battle/functions/update_players.lua
+-- /home/s1eep1ess/workspace/lua/echeckers/game/battle/functions/update_players.lua
 -- Update when player joins the room
 
--- /home/s1eep1ess/workspace/lua/echeckers/battle/board/board.lua
+-- /home/s1eep1ess/workspace/lua/echeckers/game/battle/board/board.lua
 --- Board module - flat table structure
 -- Index mapping:
 --   1-6:  Player 2 biomes
@@ -1759,7 +1759,7 @@ function BoardModule.swap_biomes(player, slot1, slot2)
     Board[idx1], Board[idx2] = Board[idx2], Board[idx1]
 end
 
--- /home/s1eep1ess/workspace/lua/echeckers/battle/board/biomes.lua
+-- /home/s1eep1ess/workspace/lua/echeckers/game/battle/board/biomes.lua
 --- Biome operations module
 -- Works with flat board structure
 
@@ -1822,7 +1822,7 @@ function BiomesOps.get_def(player, slot)
     return biome and biome.def
 end
 
--- /home/s1eep1ess/workspace/lua/echeckers/battle/validation/2_standby_validation.lua
+-- /home/s1eep1ess/workspace/lua/echeckers/game/battle/validation/2_standby_validation.lua
 --- Validation for standby phase operations
 
 StandbyValidation = {}
@@ -1889,7 +1889,7 @@ function StandbyValidation.validate_remove_animal(player, index)
     return true
 end
 
--- /home/s1eep1ess/workspace/lua/echeckers/battle/phases/0_setup.lua
+-- /home/s1eep1ess/workspace/lua/echeckers/game/battle/phases/0_setup.lua
 --[[
 This file should be called when duel starts
 Biomes, decks and items should be saved as globals
@@ -1978,7 +1978,7 @@ local function setup()
     end
 end
 
--- /home/s1eep1ess/workspace/lua/echeckers/battle/phases/1_draw_phase.lua
+-- /home/s1eep1ess/workspace/lua/echeckers/game/battle/phases/1_draw_phase.lua
 local _update_ui = function ()
     -- Each player should not see the other hand
     UI.update_hand(Hands[2], 'hidden')
@@ -2004,7 +2004,7 @@ local draw = function ()
         return
     end
 end
--- /home/s1eep1ess/workspace/lua/echeckers/battle/phases/2_standby_phase.lua
+-- /home/s1eep1ess/workspace/lua/echeckers/game/battle/phases/2_standby_phase.lua
 local _set_animal = function(hand_index, biome_index)
     hand_index = hand_index or 1
     biome_index = biome_index or 1
@@ -2089,7 +2089,7 @@ local standby = function()
     _update_ui()
 end
 
--- /home/s1eep1ess/workspace/lua/echeckers/battle/phases/3_battle_phase.lua
+-- /home/s1eep1ess/workspace/lua/echeckers/game/battle/phases/3_battle_phase.lua
 -- Must be automatic,
 -- Air attacks Air, ground attacks ground and etc.
 
@@ -2102,9 +2102,9 @@ end
 -- Apply class buffs
 -- Use attack X defense,  
 
--- /home/s1eep1ess/workspace/lua/echeckers/battle/phases/4_end_phase.lua
+-- /home/s1eep1ess/workspace/lua/echeckers/game/battle/phases/4_end_phase.lua
 -- cards in hand > 6, discard 
--- /home/s1eep1ess/workspace/lua/echeckers/battle/ui/tui_colors.lua
+-- /home/s1eep1ess/workspace/lua/echeckers/game/battle/ui/tui_colors.lua
 --- Convert hex color to RGB values
 ---@param hex string Hex color string (e.g., '#dddd00' or 'FF551700')
 ---@return number r, number g, number b
@@ -2164,7 +2164,7 @@ local function format_emoji_field(emoji)
 
     return emoji_padding_overrides[emoji] or emoji
 end
--- /home/s1eep1ess/workspace/lua/echeckers/battle/ui/UI.display.lua
+-- /home/s1eep1ess/workspace/lua/echeckers/game/battle/ui/UI.display.lua
 -- @2, 
 _TUI_display = function(message, separator)
     separator = separator or ''
@@ -2181,7 +2181,7 @@ UI.display = function(message, separator)
         _TUI_display(message, separator)
     end
 end
--- /home/s1eep1ess/workspace/lua/echeckers/battle/ui/UI.input.lua
+-- /home/s1eep1ess/workspace/lua/echeckers/game/battle/ui/UI.input.lua
 -- Ask for input in the format:
 -- {input_type, input_prompt}
 _TUI_input = function (input_handler, is_menu)
@@ -2218,7 +2218,7 @@ UI.input = function(input_handler, is_menu)
         _TUI_display(input_handler, is_menu)
     end
 end
--- /home/s1eep1ess/workspace/lua/echeckers/battle/ui/UI.update_board.lua
+-- /home/s1eep1ess/workspace/lua/echeckers/game/battle/ui/UI.update_board.lua
 --- Center text ignoring ANSI escape codes
 ---@param text string
 ---@param width number
@@ -2372,7 +2372,7 @@ UI.update_board = function(board)
     end
 end
 
--- /home/s1eep1ess/workspace/lua/echeckers/battle/ui/UI.update_hand.lua
+-- /home/s1eep1ess/workspace/lua/echeckers/game/battle/ui/UI.update_hand.lua
 ---@diagnostic disable: duplicate-set-field
 local function _build_hidden_hand(hand, start_index, end_index, show_prev, show_next, hand_bg, hand_fg, nav_bg, nav_fg, ANSI_RESET)
     local hidden_card = hand_bg .. hand_fg .. '🂠' .. ANSI_RESET
@@ -2493,7 +2493,7 @@ UI.update_hand = function(hand, is_hidden, start_index, end_index)
     end
 end
 
--- /home/s1eep1ess/workspace/lua/echeckers/battle/decks/default.lua
+-- /home/s1eep1ess/workspace/lua/echeckers/game/battle/decks/default.lua
 DECK = {
 	-- Max: 100 cartas
 	basic = {
@@ -2517,7 +2517,7 @@ DECK = {
 		{"black","draw4"},{"black","draw4"},{"black","draw4"},{"black","draw4"}
 	},
 }
--- /home/s1eep1ess/workspace/lua/echeckers/battle/battle.lua
+-- /home/s1eep1ess/workspace/lua/echeckers/game/battle/battle.lua
 local _start_battle = function ()
     UI.display('Setting up:')
     setup()

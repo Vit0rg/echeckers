@@ -3,13 +3,13 @@
 # Builds main game and battle module separately
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"  # Go to project root
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"  # Go to project root
 cd "$PROJECT_ROOT"
 
 # Build configuration
 declare -A BUILDS=(
-    ["main"]="build_systems/build_main.txt processed_script.lua"
-    ["battle"]="build_systems/build_battle.txt battle/processed_battle.lua"
+    ["main"]="development/build_systems/build_main.txt game/processed_script.lua"
+    ["battle"]="development/build_systems/build_battle.txt game/battle/processed_battle.lua"
 )
 
 build_failed=0
