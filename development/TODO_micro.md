@@ -24,9 +24,14 @@
 [OK] Create Standby (set animals on board, apply specials)
     -- Implemented: _set_animal(), _remove_animal(), _move_animal(), _move_biome()
     -- Input integration pending (Step 10)
-    
+
 ## Step 8:
-[] Create Battle logic and ui
+[OK] Standby phase bug fixes and completion (Step 8.1)
+    -- Fixed: Replaced fieldsOps with BiomesOps
+    -- Fixed: Function names aligned with terminology
+    -- Fixed: _move_animal() was placeholder, now implemented
+    -- Fixed: _move_biome() validation corrected
+    [ ] Create Battle logic and ui
 
 ## Step 9:
 [] Create End phase logic and ui

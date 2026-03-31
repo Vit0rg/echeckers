@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Step 8.1 - Standby Phase Implementation
+
+### Fixed
+- **Standby Phase** (`game/battle/phases/2_standby_phase.lua`)
+  - Replaced undefined `fieldsOps` with `BiomesOps` module
+  - Fixed function names to match biome terminology:
+    - `_set_card()` → `_set_animal()`
+    - `_remove_card()` → `_remove_animal()`
+    - `_move_card()` → `_move_animal()` (was placeholder, now implemented)
+    - `_move_field()` → `_move_biome()`
+  - Implemented `_move_animal()` with full validation
+  - Added proper input handling structure (TODO: integrate UI.input())
+  - Added LuaDoc style documentation for all functions
+  - Fixed validation function calls to use correct names
+
+### Changed
+- **Standby Phase** (`game/battle/phases/2_standby_phase.lua`)
+  - Updated menu options to reflect correct terminology
+  - Improved UI output with player turn indicator
+  - Added return value for success/failure tracking
+  - Consistent parameter naming (biome_index instead of field_index)
+
+### Benefits
+- **Correct module usage** - BiomesOps instead of undefined fieldsOps
+- **Complete implementation** - All 4 standby actions now functional
+- **Better documentation** - All functions have doc comments
+- **Consistent terminology** - Aligns with board/biomes.lua naming
+
 ### Step 6.5 - Flat Board Structure
 
 ### Changed

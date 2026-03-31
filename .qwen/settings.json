@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir *)",
+      "Bash(./development/build_systems/build_system)",
+      "Bash(lua *)",
+      "Bash(do *)",
+      "Bash(done)",
+      "Bash(luac *)",
+      "Bash(which *)",
+      "Bash(luacheck *)",
+      "Bash(git add *)"
+    ]
+  },
+  "$version": 3
+}

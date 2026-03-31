@@ -28,7 +28,7 @@ local main_menu = function ()
     local output = string.format("\nEcheckers\n\n%s\n%s\n%s\n%s\n",
                             options[1], options[2], options[3], options[4])
 
-    -- UI.update_menu(output)
+    UI.update_menu(output)
 
     -- implement input here
     local input = 1
