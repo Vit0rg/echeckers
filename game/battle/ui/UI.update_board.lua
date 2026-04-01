@@ -127,9 +127,9 @@ local function _TUI_update_board(board)
         local layout_row
 
         if mapping.row_func == 'get_layout_row' then
-            layout_row = BoardModule.get_layout_row(mapping.player)
+            layout_row = boardModule.get_layout_row(mapping.player)
         else
-            layout_row = BoardModule.get_middle_row()
+            layout_row = boardModule.get_middle_row()
         end
 
         for col = 1, 5 do

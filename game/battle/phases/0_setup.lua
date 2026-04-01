@@ -33,7 +33,7 @@ end
 
 local function _setup_board(MODE)
     if MODE == 'basic' then
-        Board = BoardModule.init(Biomes[1], Biomes[2])
+        Board = boardModule.init(Biomes[1], Biomes[2])
     end
 end
 

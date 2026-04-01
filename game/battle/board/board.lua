@@ -5,13 +5,13 @@
 --   1-6:  Player 2 biomes
 --   7-12: Player 1 biomes
 
-local BoardModule = {}
+local boardModule = {}
 
 --- Get biome index for player
 -- @param player number (1 or 2)
 -- @param index number (1-6)
 -- @return number Flat table index
-function BoardModule.biome_index(player, index)
+function boardModule.biome_index(player, index)
     if player == 1 then
         return 7 + index - 1  -- P1_BIOME_START = 7
     else
@@ -22,7 +22,7 @@ end
 --- Get player from biome index
 -- @param index number (1-12)
 -- @return number Player (1 or 2)
-function BoardModule.biome_player(index)
+function boardModule.biome_player(index)
     if index <= 6 then return 2 end
     return 1
 end
@@ -30,7 +30,7 @@ end
 --- Get biome slot (1-6) from flat index
 -- @param index number (1-12)
 -- @return number Biome slot
-function BoardModule.biome_slot(index)
+function boardModule.biome_slot(index)
     if index <= 6 then return index end
     return index - 6
 end
@@ -39,7 +39,7 @@ end
 -- @param biomes_p1 table Player 1's biomes (array of 6)
 -- @param biomes_p2 table Player 2's biomes (array of 6)
 -- @return table Board instance
-function BoardModule.init(biomes_p1, biomes_p2)
+function boardModule.init(biomes_p1, biomes_p2)
     local board = {}
 
     -- Biomes: {def, animal}
@@ -66,9 +66,9 @@ end
 -- Uses global: Player_turn
 -- @param slot number (1-6)
 -- @return table|nil Biome {def, animal}
-function BoardModule.get_biome(slot)
+function boardModule.get_biome(slot)
     if not Board then return nil end
-    local idx = BoardModule.biome_index(Player_turn, slot)
+    local idx = boardModule.biome_index(Player_turn, slot)
     return Board[idx]
 end
 
@@ -76,8 +76,8 @@ end
 -- Uses global: Player_turn
 -- @param slot number (1-6)
 -- @param card table|nil
-function BoardModule.set_biome_animal(slot, card)
-    local biome = BoardModule.get_biome(slot)
+function boardModule.set_biome_animal(slot, card)
+    local biome = boardModule.get_biome(slot)
     if biome then
         biome.animal = card
     end
@@ -86,7 +86,7 @@ end
 --- Get visual layout row for UI
 -- @param player number (1 or 2)
 -- @return table Layout row (10 cells)
-function BoardModule.get_layout_row(player)
+function boardModule.get_layout_row(player)
     if not Board then return {} end
 
     if player == 2 then
@@ -110,7 +110,7 @@ end
 
 --- Get middle layout row
 -- @return table Middle row (5 cells)
-function BoardModule.get_middle_row()
+function boardModule.get_middle_row()
     return { '', 'SETUP', '', '', '' }
 end
 
@@ -118,9 +118,9 @@ end
 -- Uses global: Player_turn
 -- @param slot1 number (1-6)
 -- @param slot2 number (1-6)
-function BoardModule.swap_biomes(slot1, slot2)
-    local idx1 = BoardModule.biome_index(Player_turn, slot1)
-    local idx2 = BoardModule.biome_index(Player_turn, slot2)
+function boardModule.swap_biomes(slot1, slot2)
+    local idx1 = boardModule.biome_index(Player_turn, slot1)
+    local idx2 = boardModule.biome_index(Player_turn, slot2)
     Board[idx1], Board[idx2] = Board[idx2], Board[idx1]
 end
 
