@@ -1,7 +1,9 @@
 --- Biome operations module
 -- Works with flat board structure
+-- Uses globals: Board, BoardModule
+-- NOTE: This file is concatenated in build - module exported at end
 
-BiomesOps = {}
+local BiomesOps = {}
 
 --- Check if biome has no animal
 ---@param player number (1 or 2)
@@ -59,3 +61,6 @@ function BiomesOps.get_def(player, slot)
     local biome = BoardModule.get_biome(player, slot)
     return biome and biome.def
 end
+
+-- Export to global scope for use in other files
+_G.BiomesOps = BiomesOps

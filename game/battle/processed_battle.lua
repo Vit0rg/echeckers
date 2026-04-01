@@ -1762,8 +1762,10 @@ end
 -- /home/s1eep1ess/workspace/lua/echeckers/game/battle/board/biomes.lua
 --- Biome operations module
 -- Works with flat board structure
+-- Uses globals: Board, BoardModule
+-- NOTE: This file is concatenated in build - module exported at end
 
-BiomesOps = {}
+local BiomesOps = {}
 
 --- Check if biome has no animal
 ---@param player number (1 or 2)
@@ -1821,6 +1823,9 @@ function BiomesOps.get_def(player, slot)
     local biome = BoardModule.get_biome(player, slot)
     return biome and biome.def
 end
+
+-- Export to global scope for use in other files
+_G.BiomesOps = BiomesOps
 
 -- /home/s1eep1ess/workspace/lua/echeckers/game/battle/validation/2_standby_validation.lua
 --- Validation for standby phase operations
