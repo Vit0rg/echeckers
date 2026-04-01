@@ -9,7 +9,8 @@
       "Bash(luac *)",
       "Bash(which *)",
       "Bash(luacheck *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit *)"
     ]
   },
   "$version": 3

@@ -111,6 +111,7 @@ end
 
 --- Standby phase - player action phase
 -- Players can set animals, remove animals, move animals, or move biomes
+-- NOTE: This file is concatenated in build - do NOT return at file end
 local standby = function()
     local options = {'Set Animal', 'Move Animal', 'Remove Animal', 'Move Biome'}
     local actions = { _set_animal, _move_animal, _remove_animal, _move_biome }
@@ -137,5 +138,4 @@ local standby = function()
     _update_ui()
     return success
 end
-
-return standby
+-- DO NOT add 'return standby' - this file is concatenated in build process

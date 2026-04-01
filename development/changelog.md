@@ -4,6 +4,38 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Step 8.2 - Dry-Run Test Agent and Bundle Validation
+
+### Added
+- **Dry-Run Test Agent** (`development/roles/dry-run-test-agent.md`)
+  - New agent role for bundle-level validation
+  - Detects premature `return` statements in concatenated files
+  - Validates function definitions in phase files
+  - Tests build artifact integrity
+- **Dry-Run Test Suite** (`development/dry_run_tests/test_bundle.lua`)
+  - Checks phase files for module return patterns
+  - Verifies bundle has no file-scope returns
+  - Validates expected function definitions
+  - 9/9 tests passing
+
+### Fixed
+- **Standby Phase** (`game/battle/phases/2_standby_phase.lua`)
+  - Removed `return standby` at end of file
+  - Added comment warning against module pattern in concatenated files
+  - Changed from module return to script pattern
+
+### Changed
+- **Workflow** (`development/workflow/current_workflow.md`)
+  - Added Dry-Run Test Agent to validation phase
+  - Updated handoff sequences to include bundle validation
+  - Added agent communication channels for Dry-Run Test Agent
+
+### Benefits
+- **Early detection** - Bundle-level issues caught before commit
+- **Prevents crashes** - No more premature returns in concatenated files
+- **Validated integration** - Phase files work correctly when bundled
+- **Clear patterns** - Script pattern vs module pattern documented
+
 ### Step 8.1 - Standby Phase Implementation
 
 ### Fixed

@@ -17,6 +17,7 @@ This document describes the **current operational workflow** for the echeckers p
 | **Docs Agent** | Documentation Synchronizer | Documentation maintenance |
 | **Architect Agent** | Architecture Guardian | Global state and dependencies |
 | **Release Agent** | Release Coordinator | Release preparation and deployment |
+| **Dry-Run Test Agent** | Integration Validator | Bundle-level validation |
 
 ---
 
@@ -85,6 +86,14 @@ This document describes the **current operational workflow** for the echeckers p
 │  PHASE 3: VALIDATION                                         │
 │  ════════════════════                                        │
 │  ┌──────────────────────────────────────────────────────┐   │
+│  │ Dry-Run Test Agent                                    │   │
+│  │ - Check for premature returns in phase files          │   │
+│  │ - Verify bundle integrity                             │   │
+│  │ - Validate function definitions                       │   │
+│  └──────────────────────────────────────────────────────┘   │
+│                          │                                   │
+│                          ▼                                   │
+│  ┌──────────────────────────────────────────────────────┐   │
 │  │ Test Agent                                            │   │
 │  │ - Run syntax checks (lua -p)                          │   │
 │  │ - Execute unit tests                                  │   │
@@ -128,7 +137,7 @@ This document describes the **current operational workflow** for the echeckers p
 
 **Handoff Sequence:**
 ```
-Architect → Code → Build → Test → Quality → Docs → Release → [Git]
+Architect → Code → Build → Dry-Run Test → Test → Quality → Docs → Release → [Git]
 ```
 
 ---
@@ -167,7 +176,7 @@ Architect → Code → Build → Test → Quality → Docs → Release → [Git]
 
 **Handoff Sequence:**
 ```
-Quality → Code → Test → Quality → Release → [Git]
+Quality → Code → Dry-Run Test → Test → Quality → Release → [Git]
 ```
 
 ---
@@ -223,7 +232,7 @@ Quality → Code → Test → Quality → Release → [Git]
 
 **Handoff Sequence:**
 ```
-Architect → Code → Build → Test → Quality → Docs → Architect → Release → [Git]
+Architect → Code → Build → Dry-Run Test → Test → Quality → Docs → Architect → Release → [Git]
 ```
 
 ---
@@ -323,11 +332,16 @@ PRIORITY: [critical | high | normal | low]
 │               ├──> Quality Agent  (code review)             │
 │               └──> Docs Agent     (API docs, changelog)     │
 │                                                              │
-│  Build Agent ─┬──> Test Agent     (build artifacts ready)   │
-│               ├──> Quality Agent  (build warnings)          │
-│               └──> Release Agent  (artifacts for release)   │
+│  Build Agent ─┬──> Dry-Run Test Agent (build artifacts ready)       │
+│               ├──> Test Agent     (build artifacts ready)           │
+│               ├──> Quality Agent  (build warnings)                  │
+│               └──> Release Agent  (artifacts for release)           │
 │                                                              │
-│  Test Agent ──┬──> Code Agent     (test failures)           │
+│  Dry-Run Test ──┬──> Code Agent     (premature returns found)       │
+│  Agent          ├──> Build Agent    (bundle order issues)          │
+│                 └──> Test Agent     (bundle validated)             │
+│                                                              │
+│  Test Agent ──┬──> Code Agent     (test failures)                 │
 │               ├──> Quality Agent  (quality metrics)         │
 │               └──> Release Agent  (release approval)        │
 │                                                              │
