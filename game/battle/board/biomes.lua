@@ -62,5 +62,5 @@ function BiomesOps.get_def(player, slot)
     return biome and biome.def
 end
 
--- Export to global scope for use in other files
-_G.BiomesOps = BiomesOps
+-- Module is local, available to files after this in build order
+-- No export needed - files are concatenated in build_battle.txt
