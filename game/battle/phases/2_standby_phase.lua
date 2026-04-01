@@ -1,4 +1,5 @@
 --- Place an animal card from hand onto a biome
+-- Uses globals: Player_turn, Hands, Board
 -- @param hand_index number Index in hand (1-4)
 -- @param biome_index number Biome slot (1-6)
 -- @return boolean Success
@@ -6,18 +7,17 @@ local _set_animal = function(hand_index, biome_index)
     hand_index = hand_index or 1
     biome_index = biome_index or 1
 
-    local turn = Player_turn
-    local hand = Hands[turn]
+    local hand = Hands[Player_turn]
     local len = #hand
     local card = hand[hand_index]
 
-    local valid, err = StandbyValidation.validate_set_animal(turn, biome_index, hand, hand_index)
+    local valid, err = StandbyValidation.validate_set_animal(hand_index, biome_index)
     if not valid then
         UI.display('Invalid move: ' .. err)
         return false
     end
 
-    BiomesOps.set_animal(turn, biome_index, card)
+    BiomesOps.set_animal(Player_turn, biome_index, card)
 
     -- Remove card from hand by swapping with last element
     if hand_index < len then
@@ -29,21 +29,21 @@ local _set_animal = function(hand_index, biome_index)
 end
 
 --- Remove an animal from a biome and return it to hand
+-- Uses globals: Player_turn, Hands, Board
 -- @param biome_index number Biome slot (1-6)
 -- @return boolean Success
 local _remove_animal = function(biome_index)
     biome_index = biome_index or 1
 
-    local turn = Player_turn
-    local hand = Hands[turn]
+    local hand = Hands[Player_turn]
 
-    local valid, err = StandbyValidation.validate_remove_animal(turn, biome_index)
+    local valid, err = StandbyValidation.validate_remove_animal(biome_index)
     if not valid then
         UI.display('Invalid move: ' .. err)
         return false
     end
 
-    local removed = BiomesOps.remove_animal(turn, biome_index)
+    local removed = BiomesOps.remove_animal(Player_turn, biome_index)
     if removed then
         hand[#hand + 1] = removed
     end
@@ -84,6 +84,7 @@ local _move_animal = function(from_biome, to_biome)
 end
 
 --- Move/swap two biomes (change their positions)
+-- Uses globals: Player_turn, Board
 -- @param from_biome number Source biome slot (1-6)
 -- @param to_biome number Destination biome slot (1-6)
 -- @return boolean Success
@@ -91,15 +92,13 @@ local _move_biome = function(from_biome, to_biome)
     from_biome = from_biome or 1
     to_biome = to_biome or 2
 
-    local turn = Player_turn
-
-    local valid, err = StandbyValidation.validate_biome_move(turn, from_biome, to_biome)
+    local valid, err = StandbyValidation.validate_biome_move(from_biome, to_biome)
     if not valid then
         UI.display('Invalid move: ' .. err)
         return false
     end
 
-    return BiomesOps.move(turn, from_biome, to_biome)
+    return BiomesOps.move(Player_turn, from_biome, to_biome)
 end
 
 --- Update UI display

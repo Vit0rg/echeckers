@@ -1824,70 +1824,103 @@ end
 
 -- /home/s1eep1ess/workspace/lua/echeckers/game/battle/validation/2_standby_validation.lua
 --- Validation for standby phase operations
+-- Uses global state directly (Player_turn, Hands, Board)
+-- Functions do not receive arguments except indices
 
-StandbyValidation = {}
+local standbyValidation = {}
 
-function StandbyValidation.valid_biome_index(index)
+--- Validate biome index is in range 1-6
+-- @param index number Biome slot to validate
+-- @return boolean True if valid
+function standbyValidation.valid_biome_index(index)
     return type(index) == 'number' and index >= 1 and index <= 6
 end
 
-function StandbyValidation.valid_player(player)
-    return type(player) == 'number' and (player == 1 or player == 2)
-end
-
-function StandbyValidation.validate_biome_move(player, from, to)
-    if not StandbyValidation.valid_player(player) then
-        return false, 'Invalid player'
+--- Validate set animal operation
+-- Uses globals: Player_turn, Hands, Board
+-- @param hand_index number Index in current player's hand
+-- @param biome_index number Biome slot (1-6)
+-- @return boolean valid
+-- @return string|nil error message
+function standbyValidation.validate_set_animal(hand_index, biome_index)
+    -- Validate biome index
+    if not standbyValidation.valid_biome_index(biome_index) then
+        return false, 'Invalid biome index (1-6)'
     end
-    if not StandbyValidation.valid_biome_index(from) then
-        return false, 'Invalid source biome (1-6)'
-    end
-    if not StandbyValidation.valid_biome_index(to) then
-        return false, 'Invalid destination biome (1-6)'
-    end
-    if from == to then
-        return false, 'Source and destination must differ'
-    end
+    
+    -- Validate board initialized
     if not Board then
         return false, 'Board not initialized'
     end
-    return true
-end
-
-function StandbyValidation.validate_set_animal(player, index, hand, hand_index)
-    if not StandbyValidation.valid_player(player) then
-        return false, 'Invalid player'
-    end
-    if not StandbyValidation.valid_biome_index(index) then
-        return false, 'Invalid biome index (1-6)'
-    end
+    
+    -- Validate hand and card
+    local hand = Hands[Player_turn]
     if not hand or not hand[hand_index] then
         return false, 'Invalid card in hand'
     end
-    if not Board then
-        return false, 'Board not initialized'
-    end
-    if not BiomesOps.is_empty(player, index) then
+    
+    -- Validate biome is empty
+    if not BiomesOps.is_empty(Player_turn, biome_index) then
         return false, 'Biome already occupied'
     end
+    
     return true
 end
 
-function StandbyValidation.validate_remove_animal(player, index)
-    if not StandbyValidation.valid_player(player) then
-        return false, 'Invalid player'
-    end
-    if not StandbyValidation.valid_biome_index(index) then
+--- Validate remove animal operation
+-- Uses globals: Player_turn, Board
+-- @param biome_index number Biome slot (1-6)
+-- @return boolean valid
+-- @return string|nil error message
+function standbyValidation.validate_remove_animal(biome_index)
+    -- Validate biome index
+    if not standbyValidation.valid_biome_index(biome_index) then
         return false, 'Invalid biome index (1-6)'
     end
+    
+    -- Validate board initialized
     if not Board then
         return false, 'Board not initialized'
     end
-    if BiomesOps.is_empty(player, index) then
+    
+    -- Validate biome has animal
+    if BiomesOps.is_empty(Player_turn, biome_index) then
         return false, 'No animal on biome'
     end
+    
     return true
 end
+
+--- Validate biome move (swap positions) operation
+-- Uses globals: Player_turn, Board
+-- @param from_biome number Source biome slot (1-6)
+-- @param to_biome number Destination biome slot (1-6)
+-- @return boolean valid
+-- @return string|nil error message
+function standbyValidation.validate_biome_move(from_biome, to_biome)
+    -- Validate biome indices
+    if not standbyValidation.valid_biome_index(from_biome) then
+        return false, 'Invalid source biome (1-6)'
+    end
+    if not standbyValidation.valid_biome_index(to_biome) then
+        return false, 'Invalid destination biome (1-6)'
+    end
+    
+    -- Validate different biomes
+    if from_biome == to_biome then
+        return false, 'Source and destination must differ'
+    end
+    
+    -- Validate board initialized
+    if not Board then
+        return false, 'Board not initialized'
+    end
+    
+    return true
+end
+
+-- Export to global scope for use in standby phase
+StandbyValidation = standbyValidation
 
 -- /home/s1eep1ess/workspace/lua/echeckers/game/battle/phases/0_setup.lua
 --[[
@@ -2006,6 +2039,7 @@ local draw = function ()
 end
 -- /home/s1eep1ess/workspace/lua/echeckers/game/battle/phases/2_standby_phase.lua
 --- Place an animal card from hand onto a biome
+-- Uses globals: Player_turn, Hands, Board
 -- @param hand_index number Index in hand (1-4)
 -- @param biome_index number Biome slot (1-6)
 -- @return boolean Success
@@ -2013,18 +2047,17 @@ local _set_animal = function(hand_index, biome_index)
     hand_index = hand_index or 1
     biome_index = biome_index or 1
 
-    local turn = Player_turn
-    local hand = Hands[turn]
+    local hand = Hands[Player_turn]
     local len = #hand
     local card = hand[hand_index]
 
-    local valid, err = StandbyValidation.validate_set_animal(turn, biome_index, hand, hand_index)
+    local valid, err = StandbyValidation.validate_set_animal(hand_index, biome_index)
     if not valid then
         UI.display('Invalid move: ' .. err)
         return false
     end
 
-    BiomesOps.set_animal(turn, biome_index, card)
+    BiomesOps.set_animal(Player_turn, biome_index, card)
 
     -- Remove card from hand by swapping with last element
     if hand_index < len then
@@ -2036,21 +2069,21 @@ local _set_animal = function(hand_index, biome_index)
 end
 
 --- Remove an animal from a biome and return it to hand
+-- Uses globals: Player_turn, Hands, Board
 -- @param biome_index number Biome slot (1-6)
 -- @return boolean Success
 local _remove_animal = function(biome_index)
     biome_index = biome_index or 1
 
-    local turn = Player_turn
-    local hand = Hands[turn]
+    local hand = Hands[Player_turn]
 
-    local valid, err = StandbyValidation.validate_remove_animal(turn, biome_index)
+    local valid, err = StandbyValidation.validate_remove_animal(biome_index)
     if not valid then
         UI.display('Invalid move: ' .. err)
         return false
     end
 
-    local removed = BiomesOps.remove_animal(turn, biome_index)
+    local removed = BiomesOps.remove_animal(Player_turn, biome_index)
     if removed then
         hand[#hand + 1] = removed
     end
@@ -2091,6 +2124,7 @@ local _move_animal = function(from_biome, to_biome)
 end
 
 --- Move/swap two biomes (change their positions)
+-- Uses globals: Player_turn, Board
 -- @param from_biome number Source biome slot (1-6)
 -- @param to_biome number Destination biome slot (1-6)
 -- @return boolean Success
@@ -2098,15 +2132,13 @@ local _move_biome = function(from_biome, to_biome)
     from_biome = from_biome or 1
     to_biome = to_biome or 2
 
-    local turn = Player_turn
-
-    local valid, err = StandbyValidation.validate_biome_move(turn, from_biome, to_biome)
+    local valid, err = StandbyValidation.validate_biome_move(from_biome, to_biome)
     if not valid then
         UI.display('Invalid move: ' .. err)
         return false
     end
 
-    return BiomesOps.move(turn, from_biome, to_biome)
+    return BiomesOps.move(Player_turn, from_biome, to_biome)
 end
 
 --- Update UI display

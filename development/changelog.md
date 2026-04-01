@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Step 8.3 - Validation Module Localization
+
+### Changed
+- **Standby Validation** (`game/battle/validation/2_standby_validation.lua`)
+  - Localized module: `StandbyValidation` → `local standbyValidation`
+  - Functions now access global state directly (no arguments for player/hand)
+  - Simplified function signatures:
+    - `validate_set_animal(hand_index, biome_index)` - Uses `Player_turn`, `Hands`
+    - `validate_remove_animal(biome_index)` - Uses `Player_turn`
+    - `validate_biome_move(from_biome, to_biome)` - Uses `Player_turn`
+  - Module exported at end: `StandbyValidation = standbyValidation`
+
+- **Standby Phase** (`game/battle/phases/2_standby_phase.lua`)
+  - Updated validation calls to use simplified signatures
+  - Removed redundant `turn` variable, uses `Player_turn` directly
+  - Added `Uses globals:` documentation comments
+
+### Benefits
+- **Cleaner API** - Validation functions don't need redundant arguments
+- **Consistent pattern** - Matches project convention of global state access
+- **Localized module** - Internal functions not polluting global scope
+- **Simpler calls** - Less boilerplate in standby phase functions
+
 ### Step 8.2 - Dry-Run Test Agent and Bundle Validation
 
 ### Added
