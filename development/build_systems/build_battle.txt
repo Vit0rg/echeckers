@@ -13,7 +13,7 @@ game/battle/functions/draw_card.lua
 game/battle/functions/select_deck.lua
 game/battle/functions/update_players.lua
 game/battle/board/board.lua
-game/battle/board/biomes.lua
+game/battle/board/fields.lua
 game/battle/validation/2_standby_validation.lua
 game/battle/phases/0_setup.lua
 game/battle/phases/1_draw_phase.lua

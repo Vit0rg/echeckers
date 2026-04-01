@@ -1631,51 +1631,51 @@ end
 -- Uses globals: Player_turn, Board
 -- NOTE: This file is concatenated in build - module available to subsequent files
 -- Index mapping:
---   1-6:  Player 2 biomes
---   7-12: Player 1 biomes
+--   1-6:  Player 2 fields
+--   7-12: Player 1 fields
 
 local boardModule = {}
 
---- Get biome index for player
+--- Get field index for player
 -- @param player number (1 or 2)
 -- @param index number (1-6)
 -- @return number Flat table index
-function boardModule.biome_index(player, index)
+function boardModule.field_index(player, index)
     if player == 1 then
-        return 7 + index - 1  -- P1_BIOME_START = 7
+        return 7 + index - 1
     else
-        return 1 + index - 1  -- P2_BIOME_START = 1
+        return 1 + index - 1
     end
 end
 
---- Get player from biome index
+--- Get player from field index
 -- @param index number (1-12)
 -- @return number Player (1 or 2)
-function boardModule.biome_player(index)
+function boardModule.field_player(index)
     if index <= 6 then return 2 end
     return 1
 end
 
---- Get biome slot (1-6) from flat index
+--- Get field slot (1-6) from flat index
 -- @param index number (1-12)
--- @return number Biome slot
-function boardModule.biome_slot(index)
+-- @return number Field slot
+function boardModule.field_slot(index)
     if index <= 6 then return index end
     return index - 6
 end
 
 --- Initialize board with flat structure
--- @param biomes_p1 table Player 1's biomes (array of 6)
--- @param biomes_p2 table Player 2's biomes (array of 6)
+-- @param fields_p1 table Player 1's fields (array of 6)
+-- @param fields_p2 table Player 2's fields (array of 6)
 -- @return table Board instance
-function boardModule.init(biomes_p1, biomes_p2)
+function boardModule.init(fields_p1, fields_p2)
     local board = {}
 
-    -- Biomes: {def, animal}
-    -- P2 biomes (1-6), P1 biomes (7-12)
+    -- Fields: {def, card}
+    -- P2 fields (1-6), P1 fields (7-12)
     for i = 1, 6 do
-        board[i] = { def = biomes_p2[i], animal = nil }
-        board[i + 6] = { def = biomes_p1[i], animal = nil }
+        board[i] = { def = fields_p2[i], card = nil }
+        board[i + 6] = { def = fields_p1[i], card = nil }
     end
 
     -- Special zones
@@ -1691,24 +1691,24 @@ function boardModule.init(biomes_p1, biomes_p2)
     return board
 end
 
---- Get biome by player and slot
+--- Get field by player and slot
 -- Uses global: Player_turn
 -- @param slot number (1-6)
--- @return table|nil Biome {def, animal}
-function boardModule.get_biome(slot)
+-- @return table|nil Field {def, card}
+function boardModule.get_field(slot)
     if not Board then return nil end
-    local idx = boardModule.biome_index(Player_turn, slot)
+    local idx = boardModule.field_index(Player_turn, slot)
     return Board[idx]
 end
 
---- Set biome animal
+--- Set field card
 -- Uses global: Player_turn
 -- @param slot number (1-6)
 -- @param card table|nil
-function boardModule.set_biome_animal(slot, card)
-    local biome = boardModule.get_biome(slot)
-    if biome then
-        biome.animal = card
+function boardModule.set_field_card(slot, card)
+    local field = boardModule.get_field(slot)
+    if field then
+        field.card = card
     end
 end
 
@@ -1719,7 +1719,7 @@ function boardModule.get_layout_row(player)
     if not Board then return {} end
 
     if player == 2 then
-        -- P2 row: biomes 1-3, Deck, Trash, biomes 4-6, LIFE, BIOMATTER
+        -- P2 row: fields 1-3, Deck, Trash, fields 4-6, LIFE, BIOMATTER
         return {
             Board[1], Board[2], Board[3],
             Board.deck_p2, Board.trash_p2,
@@ -1727,7 +1727,7 @@ function boardModule.get_layout_row(player)
             Board.life_p2, Board.biomatter_p2
         }
     else
-        -- P1 row: biomes 1-3, LIFE, BIOMATTER, biomes 4-6, Deck, Trash
+        -- P1 row: fields 1-3, LIFE, BIOMATTER, fields 4-6, Deck, Trash
         return {
             Board[7], Board[8], Board[9],
             Board.life_p1, Board.biomatter_p1,
@@ -1743,82 +1743,82 @@ function boardModule.get_middle_row()
     return { '', 'SETUP', '', '', '' }
 end
 
---- Swap two biomes
+--- Swap two fields
 -- Uses global: Player_turn
 -- @param slot1 number (1-6)
 -- @param slot2 number (1-6)
-function boardModule.swap_biomes(slot1, slot2)
-    local idx1 = boardModule.biome_index(Player_turn, slot1)
-    local idx2 = boardModule.biome_index(Player_turn, slot2)
+function boardModule.swap_fields(slot1, slot2)
+    local idx1 = boardModule.field_index(Player_turn, slot1)
+    local idx2 = boardModule.field_index(Player_turn, slot2)
     Board[idx1], Board[idx2] = Board[idx2], Board[idx1]
 end
 
 -- Module is local, available to files after this in build order
 -- No export needed - files are concatenated in build_battle.txt
 
--- /home/s1eep1ess/workspace/lua/echeckers/game/battle/board/biomes.lua
---- Fields/Biome operations module
+-- /home/s1eep1ess/workspace/lua/echeckers/game/battle/board/fields.lua
+--- Fields operations module
 -- Works with flat board structure
 -- Uses globals: Player_turn, Board, boardModule
 -- NOTE: This file is concatenated in build - module available to subsequent files
 
 local fieldsOps = {}
 
---- Check if biome has no animal
+--- Check if field has no card
 -- Uses globals: Player_turn, Board, boardModule
 -- @param slot number (1-6)
 -- @return boolean
 function fieldsOps.is_empty(slot)
-    local biome = boardModule.get_biome(slot)
-    return not biome or biome.animal == nil
+    local field = boardModule.get_field(slot)
+    return not field or field.card == nil
 end
 
---- Place animal on biome
+--- Place card on field
 -- Uses globals: Player_turn, Board, boardModule
 -- @param slot number (1-6)
 -- @param card table
-function fieldsOps.set_animal(slot, card)
-    boardModule.set_biome_animal(slot, card)
+function fieldsOps.set_card(slot, card)
+    boardModule.set_field_card(slot, card)
 end
 
---- Remove animal from biome
+--- Remove card from field
 -- Uses globals: Player_turn, Board, boardModule
 -- @param slot number (1-6)
 -- @return table|nil Removed card
-function fieldsOps.remove_animal(slot)
-    local biome = boardModule.get_biome(slot)
-    if not biome or not biome.animal then return nil end
+function fieldsOps.remove_card(slot)
+    local field = boardModule.get_field(slot)
+    if not field or not field.card then return nil end
 
-    local removed = biome.animal
-    biome.animal = nil
+    local removed = field.card
+    field.card = nil
     return removed
 end
 
---- Swap two biomes
+--- Swap two fields
 -- Uses globals: Player_turn, Board, boardModule
 -- @param from number (1-6)
 -- @param to number (1-6)
 function fieldsOps.move(from, to)
     if from == to then return end
-    boardModule.swap_biomes(from, to)
+    boardModule.swap_fields(from, to)
 end
 
---- Get animal on biome
+--- Get card on field
 -- Uses globals: Player_turn, Board, boardModule
 -- @param slot number (1-6)
 -- @return table|nil
-function fieldsOps.get_animal(slot)
-    local biome = boardModule.get_biome(slot)
-    return biome and biome.animal
+function fieldsOps.get_card(slot)
+    local field = boardModule.get_field(slot)
+    return field and field.card
 end
 
---- Get biome definition
+--- Get field definition
 -- Uses globals: Player_turn, Board, boardModule
 -- @param slot number (1-6)
 -- @return table|nil
 function fieldsOps.get_def(slot)
-    local biome = boardModule.get_biome(slot)
-    return biome and biome.def
+    local field = boardModule.get_field(slot)
+    return field and field.def
 end
 
 -- Module is local, available to files after this in build order

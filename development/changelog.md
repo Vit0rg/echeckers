@@ -4,6 +4,38 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Step 8.13 - Field Terminology Standardization
+
+### Changed
+- **Board Module** (`game/battle/board/board.lua`)
+  - Renamed functions to use field terminology:
+    - `biome_index()` → `field_index()`
+    - `biome_player()` → `field_player()`
+    - `biome_slot()` → `field_slot()`
+    - `get_biome()` → `get_field()`
+    - `set_biome_animal()` → `set_field_card()`
+    - `swap_biomes()` → `swap_fields()`
+  - Updated field structure: `{def, card}` instead of `{def, animal}`
+  - Updated comments to use "fields" instead of "biomes"
+
+- **Fields Module** (`game/battle/board/fields.lua`)
+  - Renamed from `biomes.lua` to `fields.lua`
+  - Updated all function names to use card terminology:
+    - `is_empty()` - checks for card
+    - `set_card()` - places card on field
+    - `remove_card()` - removes card from field
+    - `get_card()` - gets card from field
+    - `get_def()` - gets field definition
+  - Updated documentation comments
+
+- **Build Configuration** (`development/build_systems/build_battle.txt`)
+  - Updated path: `game/battle/board/biomes.lua` → `game/battle/board/fields.lua`
+
+### Benefits
+- **Consistent terminology** - "field" and "card" used throughout
+- **Clearer semantics** - "card" better describes game pieces than "animal"
+- **Unified naming** - All modules use same terminology
+
 ### Step 8.3 - Validation Module Localization
 
 ### Changed
