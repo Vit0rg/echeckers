@@ -1,23 +1,23 @@
---- Place an animal card from hand onto a biome
+--- Place an animal card from hand onto a field
 -- Uses globals: Player_turn, Hands, Board
 -- @param hand_index number Index in hand (1-4)
--- @param biome_index number Biome slot (1-6)
+-- @param field_index number Field slot (1-6)
 -- @return boolean Success
-local _set_animal = function(hand_index, biome_index)
+local _set_animal = function(hand_index, field_index)
     hand_index = hand_index or 1
-    biome_index = biome_index or 1
+    field_index = field_index or 1
 
     local hand = Hands[Player_turn]
     local len = #hand
     local card = hand[hand_index]
 
-    local valid, err = StandbyValidation.validate_set_animal(hand_index, biome_index)
+    local valid, err = standbyValidation.validate_set_card(hand_index, field_index)
     if not valid then
         UI.display('Invalid move: ' .. err)
         return false
     end
 
-    fieldsOps.set_animal(biome_index, card)
+    fieldsOps.set_animal(field_index, card)
 
     -- Remove card from hand by swapping with last element
     if hand_index < len then
@@ -28,22 +28,22 @@ local _set_animal = function(hand_index, biome_index)
     return true
 end
 
---- Remove an animal from a biome and return it to hand
+--- Remove an animal from a field and return it to hand
 -- Uses globals: Player_turn, Hands, Board
--- @param biome_index number Biome slot (1-6)
+-- @param field_index number Field slot (1-6)
 -- @return boolean Success
-local _remove_animal = function(biome_index)
-    biome_index = biome_index or 1
+local _remove_animal = function(field_index)
+    field_index = field_index or 1
 
     local hand = Hands[Player_turn]
 
-    local valid, err = StandbyValidation.validate_remove_animal(biome_index)
+    local valid, err = standbyValidation.validate_remove_animal(field_index)
     if not valid then
         UI.display('Invalid move: ' .. err)
         return false
     end
 
-    local removed = fieldsOps.remove_animal(biome_index)
+    local removed = fieldsOps.remove_animal(field_index)
     if removed then
         hand[#hand + 1] = removed
     end
@@ -51,52 +51,52 @@ local _remove_animal = function(biome_index)
     return true
 end
 
---- Move an animal from one biome to another (swap positions)
--- Uses globals: Player_turn, Board, fieldsOps, UI, StandbyValidation
--- @param from_biome number Source biome slot (1-6)
--- @param to_biome number Destination biome slot (1-6)
+--- Move an animal from one field to another (swap positions)
+-- Uses globals: Player_turn, Board, fieldsOps, UI, standbyValidation
+-- @param from_field number Source field slot (1-6)
+-- @param to_field number Destination field slot (1-6)
 -- @return boolean Success
-local _move_animal = function(from_biome, to_biome)
-    from_biome = from_biome or 1
-    to_biome = to_biome or 2
+local _move_animal = function(from_field, to_field)
+    from_field = from_field or 1
+    to_field = to_field or 2
 
-    -- Validate source biome has an animal
-    if fieldsOps.is_empty(from_biome) then
-        UI.display('Invalid move: No animal on source biome')
+    -- Validate source field has an animal
+    if fieldsOps.is_empty(from_field) then
+        UI.display('Invalid move: No animal on source field')
         return false
     end
 
-    -- Validate destination biome index and different from source
-    if not StandbyValidation.valid_biome_index(to_biome) then
-        UI.display('Invalid move: Destination biome must be 1-6')
+    -- Validate destination field index and different from source
+    if not standbyValidation.valid_field_index(to_field) then
+        UI.display('Invalid move: Destination field must be 1-6')
         return false
     end
 
-    if from_biome == to_biome then
+    if from_field == to_field then
         UI.display('Invalid move: Source and destination must differ')
         return false
     end
 
-    fieldsOps.move(from_biome, to_biome)
+    fieldsOps.move(from_field, to_field)
     return true
 end
 
---- Move/swap two biomes (change their positions)
+--- Move/swap two fields (change their positions)
 -- Uses globals: Player_turn, Board
--- @param from_biome number Source biome slot (1-6)
--- @param to_biome number Destination biome slot (1-6)
+-- @param from_field number Source field slot (1-6)
+-- @param to_field number Destination field slot (1-6)
 -- @return boolean Success
-local _move_biome = function(from_biome, to_biome)
-    from_biome = from_biome or 1
-    to_biome = to_biome or 2
+local _move_field = function(from_field, to_field)
+    from_field = from_field or 1
+    to_field = to_field or 2
 
-    local valid, err = StandbyValidation.validate_biome_move(from_biome, to_biome)
+    local valid, err = standbyValidation.validate_field_move(from_field, to_field)
     if not valid then
         UI.display('Invalid move: ' .. err)
         return false
     end
 
-    return fieldsOps.move(from_biome, to_biome)
+    return fieldsOps.move(from_field, to_field)
 end
 
 --- Update UI display
@@ -108,14 +108,14 @@ end
 
 --- Standby phase - player action phase
 -- Uses globals: Player_turn, Hands, Board, UI, BUILD
--- Players can set animals, remove animals, move animals, or move biomes
+-- Players can set animals, remove animals, move animals, or move fields
 -- NOTE: This file is concatenated in build - do NOT return at file end
 local standby = function()
     -- Define action options and handlers
-    local options = {'Set Animal', 'Move Animal', 'Remove Animal', 'Move Biome'}
-    local actions = { _set_animal, _move_animal, _remove_animal, _move_biome }
+    local options = {'Set Animal', 'Move Animal', 'Remove Animal', 'Move Field'}
+    local actions = { _set_animal, _move_animal, _remove_animal, _move_field }
     local action_count = #actions
-    
+
     -- Build menu output using C-based loop
     local output = string.format("\nStandby Phase - Player %d\n\nSelect Action:\n", Player_turn)
     for i = 1, action_count do
@@ -143,7 +143,7 @@ local standby = function()
         _update_ui()
         return success
     end
-    
+
     UI.display('Invalid selection')
     return false
 end
