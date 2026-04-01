@@ -23,7 +23,7 @@ local function _print_table_recursive(current_obj, current_depth, current_visite
 
     current_visited[current_obj] = true
 
-    -- Process all keys using ipairs for array part and a manual approach for hash part
+    -- Process all keys using C-based loop for array part and next() for hash part
     -- Array part: indices 1 to #current_obj
     for i = 1, #current_obj do
         output = _process_element(i, current_obj[i], mode, separator, _print_table_recursive, current_depth, current_visited, output, max_depth)
@@ -34,7 +34,7 @@ local function _print_table_recursive(current_obj, current_depth, current_visite
 
     -- Note: Accessing hash keys in Lua tables requires some form of iteration
     -- Using rawget with known keys would require knowing keys in advance
-    -- The following is the most direct way to access non-array keys without pairs
+    -- The following uses next() to access non-array keys without pairs()
     local key_map = {}
 
     -- Use next to collect all keys first

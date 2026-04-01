@@ -90,8 +90,9 @@ local function _TUI_update_board(board)
         end
 
         -- Table cells: use extractors
-        for _, extractor in ipairs(cell_extractors) do
-            local text, color, is_card = extractor(cell)
+        local size = #cell_extractors
+        for i = 1, size do
+            local text, color, is_card = cell_extractors[i](cell)
             if text then return text, color, is_card end
         end
 
