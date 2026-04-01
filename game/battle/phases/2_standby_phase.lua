@@ -52,6 +52,7 @@ local _remove_animal = function(biome_index)
 end
 
 --- Move an animal from one biome to another (swap positions)
+-- Uses globals: Player_turn, Board, BiomesOps, UI, StandbyValidation
 -- @param from_biome number Source biome slot (1-6)
 -- @param to_biome number Destination biome slot (1-6)
 -- @return boolean Success
@@ -59,27 +60,24 @@ local _move_animal = function(from_biome, to_biome)
     from_biome = from_biome or 1
     to_biome = to_biome or 2
 
-    local turn = Player_turn
-
     -- Validate source biome has an animal
-    if BiomesOps.is_empty(turn, from_biome) then
+    if BiomesOps.is_empty(Player_turn, from_biome) then
         UI.display('Invalid move: No animal on source biome')
         return false
     end
 
-    -- Validate destination is different
+    -- Validate destination biome index and different from source
+    if not StandbyValidation.valid_biome_index(to_biome) then
+        UI.display('Invalid move: Destination biome must be 1-6')
+        return false
+    end
+    
     if from_biome == to_biome then
         UI.display('Invalid move: Source and destination must differ')
         return false
     end
 
-    -- Validate destination biome index
-    if not StandbyValidation.valid_biome_index(to_biome) then
-        UI.display('Invalid move: Destination biome must be 1-6')
-        return false
-    end
-
-    BiomesOps.move(turn, from_biome, to_biome)
+    BiomesOps.move(Player_turn, from_biome, to_biome)
     return true
 end
 
@@ -109,13 +107,20 @@ local _update_ui = function()
 end
 
 --- Standby phase - player action phase
+-- Uses globals: Player_turn, Hands, Board, UI, BUILD
 -- Players can set animals, remove animals, move animals, or move biomes
 -- NOTE: This file is concatenated in build - do NOT return at file end
 local standby = function()
+    -- Define action options and handlers
     local options = {'Set Animal', 'Move Animal', 'Remove Animal', 'Move Biome'}
     local actions = { _set_animal, _move_animal, _remove_animal, _move_biome }
-    local output = string.format("\nStandby Phase - Player %d\n\nSelect Action:\n  [1] %s\n  [2] %s\n  [3] %s\n  [4] %s\n",
-                            Player_turn, options[1], options[2], options[3], options[4])
+    local action_count = #actions
+    
+    -- Build menu output using C-based loop
+    local output = string.format("\nStandby Phase - Player %d\n\nSelect Action:\n", Player_turn)
+    for i = 1, action_count do
+        output = output .. string.format("  [%d] %s\n", i, options[i])
+    end
 
     UI.update_menu(output)
     _update_ui()
@@ -130,11 +135,16 @@ local standby = function()
         input = 1
     end
 
-    -- Execute selected action with default parameters
-    -- TODO: Pass actual parameters from user input
-    local success = actions[input]()
-
-    _update_ui()
-    return success
+    -- Validate input and execute selected action
+    if input >= 1 and input <= action_count then
+        -- Execute action with default parameters
+        -- TODO: Pass actual parameters from user input
+        local success = actions[input]()
+        _update_ui()
+        return success
+    end
+    
+    UI.display('Invalid selection')
+    return false
 end
 -- DO NOT add 'return standby' - this file is concatenated in build process
