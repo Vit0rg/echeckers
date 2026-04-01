@@ -408,7 +408,7 @@ function my_function()
 end
 
 -- ✅ Do: Local variables
-function my_function()
+local function my_function()
     local temp = value
 end
 
@@ -442,21 +442,42 @@ local BASE_BONUS = 10
 health = health * CRIT_MULTIPLIER + BASE_BONUS
 
 -- ❌ Don't: Modify table during iteration
-for i, value in ipairs(tbl) do
-    if should_remove(value) then
+for i = 1, #tbl do
+    if should_remove(tbl[i]) then
         table.remove(tbl, i)  -- Breaks iteration
     end
 end
 
--- ✅ Do: Collect then remove
+-- ✅ Do: Collect then remove (C-based loop)
 local to_remove = {}
-for i, value in ipairs(tbl) do
-    if should_remove(value) then
+local size = #tbl
+for i = 1, size do
+    if should_remove(tbl[i]) then
         table.insert(to_remove, i)
     end
 end
 for i = #to_remove, 1, -1 do
     table.remove(tbl, to_remove[i])
+end
+
+-- ❌ Don't: Use ipairs/pairs for iteration
+for _, value in ipairs(tbl) do
+    process(value)
+end
+
+-- ✅ Do: Use C-based numeric for loop
+for i = 1, #tbl do
+    process(tbl[i])
+end
+
+-- ❌ Don't: Use pairs for array iteration
+for key, value in pairs(array) do
+    process(key, value)
+end
+
+-- ✅ Do: Use explicit range with C-based loop
+for i = 1, #array do
+    process(i, array[i])
 end
 ```
 
@@ -473,8 +494,9 @@ local concat = table.concat
 -- Use table.concat for string building
 local function build_string(parts)
     local result = {}
-    for _, part in ipairs(parts) do
-        insert(result, part)
+    local size = #parts
+    for i = 1, size do
+        insert(result, parts[i])
     end
     return concat(result, "")
 end
@@ -482,16 +504,18 @@ end
 -- Avoid creating tables in loops
 local function process_items(items)
     local results = {}
-    for _, item in ipairs(items) do
+    local size = #items
+    for i = 1, size do
         -- Reuse table if possible
-        results[#results + 1] = transform(item)
+        results[#results + 1] = transform(items[i])
     end
     return results
 end
 
--- Use ipairs for array iteration (faster than pairs)
-for i, value in ipairs(array) do
-    -- Process value
+-- Use C-based numeric for loop for array iteration
+local size = #array
+for i = 1, size do
+    -- Process array[i]
 end
 ```
 
