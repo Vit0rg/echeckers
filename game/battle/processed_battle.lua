@@ -1760,36 +1760,36 @@ function BoardModule.swap_biomes(player, slot1, slot2)
 end
 
 -- /home/s1eep1ess/workspace/lua/echeckers/game/battle/board/biomes.lua
---- Biome operations module
+--- Fields/Biome operations module
 -- Works with flat board structure
--- Uses globals: Board, BoardModule
--- NOTE: This file is concatenated in build - module exported at end
+-- Uses globals: Player_turn, Board, BoardModule
+-- NOTE: This file is concatenated in build - module available to subsequent files
 
-local BiomesOps = {}
+local fieldsOps = {}
 
 --- Check if biome has no animal
----@param player number (1 or 2)
----@param slot number (1-6)
----@return boolean
-function BiomesOps.is_empty(player, slot)
-    local biome = BoardModule.get_biome(player, slot)
+-- Uses global: Player_turn
+-- @param slot number (1-6)
+-- @return boolean
+function fieldsOps.is_empty(slot)
+    local biome = BoardModule.get_biome(Player_turn, slot)
     return not biome or biome.animal == nil
 end
 
 --- Place animal on biome
----@param player number (1 or 2)
----@param slot number (1-6)
----@param card table
-function BiomesOps.set_animal(player, slot, card)
-    BoardModule.set_biome_animal(player, slot, card)
+-- Uses global: Player_turn
+-- @param slot number (1-6)
+-- @param card table
+function fieldsOps.set_animal(slot, card)
+    BoardModule.set_biome_animal(Player_turn, slot, card)
 end
 
 --- Remove animal from biome
----@param player number (1 or 2)
----@param slot number (1-6)
----@return table|nil Removed card
-function BiomesOps.remove_animal(player, slot)
-    local biome = BoardModule.get_biome(player, slot)
+-- Uses global: Player_turn
+-- @param slot number (1-6)
+-- @return table|nil Removed card
+function fieldsOps.remove_animal(slot)
+    local biome = BoardModule.get_biome(Player_turn, slot)
     if not biome or not biome.animal then return nil end
 
     local removed = biome.animal
@@ -1798,29 +1798,29 @@ function BiomesOps.remove_animal(player, slot)
 end
 
 --- Swap two biomes
----@param player number (1 or 2)
----@param from number (1-6)
----@param to number (1-6)
-function BiomesOps.move(player, from, to)
+-- Uses global: Player_turn
+-- @param from number (1-6)
+-- @param to number (1-6)
+function fieldsOps.move(from, to)
     if from == to then return end
-    BoardModule.swap_biomes(player, from, to)
+    BoardModule.swap_biomes(Player_turn, from, to)
 end
 
 --- Get animal on biome
----@param player number (1 or 2)
----@param slot number (1-6)
----@return table|nil
-function BiomesOps.get_animal(player, slot)
-    local biome = BoardModule.get_biome(player, slot)
+-- Uses global: Player_turn
+-- @param slot number (1-6)
+-- @return table|nil
+function fieldsOps.get_animal(slot)
+    local biome = BoardModule.get_biome(Player_turn, slot)
     return biome and biome.animal
 end
 
 --- Get biome definition
----@param player number (1 or 2)
----@param slot number (1-6)
----@return table|nil
-function BiomesOps.get_def(player, slot)
-    local biome = BoardModule.get_biome(player, slot)
+-- Uses global: Player_turn
+-- @param slot number (1-6)
+-- @return table|nil
+function fieldsOps.get_def(slot)
+    local biome = BoardModule.get_biome(Player_turn, slot)
     return biome and biome.def
 end
 
@@ -1865,15 +1865,15 @@ function standbyValidation.validate_set_animal(hand_index, biome_index)
     end
     
     -- Validate biome is empty
-    if not BiomesOps.is_empty(Player_turn, biome_index) then
+    if not fieldsOps.is_empty(biome_index) then
         return false, 'Biome already occupied'
     end
-    
+
     return true
 end
 
 --- Validate remove animal operation
--- Uses globals: Player_turn, Board
+-- Uses globals: Player_turn, Board, fieldsOps
 -- @param biome_index number Biome slot (1-6)
 -- @return boolean valid
 -- @return string|nil error message
@@ -1882,14 +1882,14 @@ function standbyValidation.validate_remove_animal(biome_index)
     if not standbyValidation.valid_biome_index(biome_index) then
         return false, 'Invalid biome index (1-6)'
     end
-    
+
     -- Validate board initialized
     if not Board then
         return false, 'Board not initialized'
     end
-    
+
     -- Validate biome has animal
-    if BiomesOps.is_empty(Player_turn, biome_index) then
+    if fieldsOps.is_empty(biome_index) then
         return false, 'No animal on biome'
     end
     
@@ -2062,7 +2062,7 @@ local _set_animal = function(hand_index, biome_index)
         return false
     end
 
-    BiomesOps.set_animal(Player_turn, biome_index, card)
+    fieldsOps.set_animal(biome_index, card)
 
     -- Remove card from hand by swapping with last element
     if hand_index < len then
@@ -2088,7 +2088,7 @@ local _remove_animal = function(biome_index)
         return false
     end
 
-    local removed = BiomesOps.remove_animal(Player_turn, biome_index)
+    local removed = fieldsOps.remove_animal(biome_index)
     if removed then
         hand[#hand + 1] = removed
     end
@@ -2097,7 +2097,7 @@ local _remove_animal = function(biome_index)
 end
 
 --- Move an animal from one biome to another (swap positions)
--- Uses globals: Player_turn, Board, BiomesOps, UI, StandbyValidation
+-- Uses globals: Player_turn, Board, fieldsOps, UI, StandbyValidation
 -- @param from_biome number Source biome slot (1-6)
 -- @param to_biome number Destination biome slot (1-6)
 -- @return boolean Success
@@ -2106,7 +2106,7 @@ local _move_animal = function(from_biome, to_biome)
     to_biome = to_biome or 2
 
     -- Validate source biome has an animal
-    if BiomesOps.is_empty(Player_turn, from_biome) then
+    if fieldsOps.is_empty(from_biome) then
         UI.display('Invalid move: No animal on source biome')
         return false
     end
@@ -2116,13 +2116,13 @@ local _move_animal = function(from_biome, to_biome)
         UI.display('Invalid move: Destination biome must be 1-6')
         return false
     end
-    
+
     if from_biome == to_biome then
         UI.display('Invalid move: Source and destination must differ')
         return false
     end
 
-    BiomesOps.move(Player_turn, from_biome, to_biome)
+    fieldsOps.move(from_biome, to_biome)
     return true
 end
 
@@ -2141,7 +2141,7 @@ local _move_biome = function(from_biome, to_biome)
         return false
     end
 
-    return BiomesOps.move(Player_turn, from_biome, to_biome)
+    return fieldsOps.move(from_biome, to_biome)
 end
 
 --- Update UI display

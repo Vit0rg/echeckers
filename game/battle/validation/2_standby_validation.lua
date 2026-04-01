@@ -35,15 +35,15 @@ function standbyValidation.validate_set_animal(hand_index, biome_index)
     end
     
     -- Validate biome is empty
-    if not BiomesOps.is_empty(Player_turn, biome_index) then
+    if not fieldsOps.is_empty(biome_index) then
         return false, 'Biome already occupied'
     end
-    
+
     return true
 end
 
 --- Validate remove animal operation
--- Uses globals: Player_turn, Board
+-- Uses globals: Player_turn, Board, fieldsOps
 -- @param biome_index number Biome slot (1-6)
 -- @return boolean valid
 -- @return string|nil error message
@@ -52,14 +52,14 @@ function standbyValidation.validate_remove_animal(biome_index)
     if not standbyValidation.valid_biome_index(biome_index) then
         return false, 'Invalid biome index (1-6)'
     end
-    
+
     -- Validate board initialized
     if not Board then
         return false, 'Board not initialized'
     end
-    
+
     -- Validate biome has animal
-    if BiomesOps.is_empty(Player_turn, biome_index) then
+    if fieldsOps.is_empty(biome_index) then
         return false, 'No animal on biome'
     end
     

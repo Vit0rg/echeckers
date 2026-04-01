@@ -1,33 +1,33 @@
---- Biome operations module
+--- Fields/Biome operations module
 -- Works with flat board structure
--- Uses globals: Board, BoardModule
--- NOTE: This file is concatenated in build - module exported at end
+-- Uses globals: Player_turn, Board, BoardModule
+-- NOTE: This file is concatenated in build - module available to subsequent files
 
-local BiomesOps = {}
+local fieldsOps = {}
 
 --- Check if biome has no animal
----@param player number (1 or 2)
----@param slot number (1-6)
----@return boolean
-function BiomesOps.is_empty(player, slot)
-    local biome = BoardModule.get_biome(player, slot)
+-- Uses global: Player_turn
+-- @param slot number (1-6)
+-- @return boolean
+function fieldsOps.is_empty(slot)
+    local biome = BoardModule.get_biome(Player_turn, slot)
     return not biome or biome.animal == nil
 end
 
 --- Place animal on biome
----@param player number (1 or 2)
----@param slot number (1-6)
----@param card table
-function BiomesOps.set_animal(player, slot, card)
-    BoardModule.set_biome_animal(player, slot, card)
+-- Uses global: Player_turn
+-- @param slot number (1-6)
+-- @param card table
+function fieldsOps.set_animal(slot, card)
+    BoardModule.set_biome_animal(Player_turn, slot, card)
 end
 
 --- Remove animal from biome
----@param player number (1 or 2)
----@param slot number (1-6)
----@return table|nil Removed card
-function BiomesOps.remove_animal(player, slot)
-    local biome = BoardModule.get_biome(player, slot)
+-- Uses global: Player_turn
+-- @param slot number (1-6)
+-- @return table|nil Removed card
+function fieldsOps.remove_animal(slot)
+    local biome = BoardModule.get_biome(Player_turn, slot)
     if not biome or not biome.animal then return nil end
 
     local removed = biome.animal
@@ -36,29 +36,29 @@ function BiomesOps.remove_animal(player, slot)
 end
 
 --- Swap two biomes
----@param player number (1 or 2)
----@param from number (1-6)
----@param to number (1-6)
-function BiomesOps.move(player, from, to)
+-- Uses global: Player_turn
+-- @param from number (1-6)
+-- @param to number (1-6)
+function fieldsOps.move(from, to)
     if from == to then return end
-    BoardModule.swap_biomes(player, from, to)
+    BoardModule.swap_biomes(Player_turn, from, to)
 end
 
 --- Get animal on biome
----@param player number (1 or 2)
----@param slot number (1-6)
----@return table|nil
-function BiomesOps.get_animal(player, slot)
-    local biome = BoardModule.get_biome(player, slot)
+-- Uses global: Player_turn
+-- @param slot number (1-6)
+-- @return table|nil
+function fieldsOps.get_animal(slot)
+    local biome = BoardModule.get_biome(Player_turn, slot)
     return biome and biome.animal
 end
 
 --- Get biome definition
----@param player number (1 or 2)
----@param slot number (1-6)
----@return table|nil
-function BiomesOps.get_def(player, slot)
-    local biome = BoardModule.get_biome(player, slot)
+-- Uses global: Player_turn
+-- @param slot number (1-6)
+-- @return table|nil
+function fieldsOps.get_def(slot)
+    local biome = BoardModule.get_biome(Player_turn, slot)
     return biome and biome.def
 end
 

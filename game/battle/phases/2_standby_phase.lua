@@ -17,7 +17,7 @@ local _set_animal = function(hand_index, biome_index)
         return false
     end
 
-    BiomesOps.set_animal(Player_turn, biome_index, card)
+    fieldsOps.set_animal(biome_index, card)
 
     -- Remove card from hand by swapping with last element
     if hand_index < len then
@@ -43,7 +43,7 @@ local _remove_animal = function(biome_index)
         return false
     end
 
-    local removed = BiomesOps.remove_animal(Player_turn, biome_index)
+    local removed = fieldsOps.remove_animal(biome_index)
     if removed then
         hand[#hand + 1] = removed
     end
@@ -52,7 +52,7 @@ local _remove_animal = function(biome_index)
 end
 
 --- Move an animal from one biome to another (swap positions)
--- Uses globals: Player_turn, Board, BiomesOps, UI, StandbyValidation
+-- Uses globals: Player_turn, Board, fieldsOps, UI, StandbyValidation
 -- @param from_biome number Source biome slot (1-6)
 -- @param to_biome number Destination biome slot (1-6)
 -- @return boolean Success
@@ -61,7 +61,7 @@ local _move_animal = function(from_biome, to_biome)
     to_biome = to_biome or 2
 
     -- Validate source biome has an animal
-    if BiomesOps.is_empty(Player_turn, from_biome) then
+    if fieldsOps.is_empty(from_biome) then
         UI.display('Invalid move: No animal on source biome')
         return false
     end
@@ -71,13 +71,13 @@ local _move_animal = function(from_biome, to_biome)
         UI.display('Invalid move: Destination biome must be 1-6')
         return false
     end
-    
+
     if from_biome == to_biome then
         UI.display('Invalid move: Source and destination must differ')
         return false
     end
 
-    BiomesOps.move(Player_turn, from_biome, to_biome)
+    fieldsOps.move(from_biome, to_biome)
     return true
 end
 
@@ -96,7 +96,7 @@ local _move_biome = function(from_biome, to_biome)
         return false
     end
 
-    return BiomesOps.move(Player_turn, from_biome, to_biome)
+    return fieldsOps.move(from_biome, to_biome)
 end
 
 --- Update UI display
