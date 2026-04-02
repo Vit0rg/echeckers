@@ -485,39 +485,128 @@ end
 
 ## Performance Guidelines
 
+Based on [Transformice Lua VM Performance Tests](https://github.com/Pshy0/transformice_lua_perf_tests)
+
+### Variable Access
+
 ```lua
--- Cache frequently used functions
-local floor = math.floor
-local insert = table.insert
-local concat = table.concat
-
--- Use table.concat for string building
-local function build_string(parts)
-    local result = {}
-    local size = #parts
-    for i = 1, size do
-        insert(result, parts[i])
-    end
-    return concat(result, "")
+-- ✅ DO: Use local variables instead of globals
+-- Global reads are ~20% slower, global writes are ~33% slower
+local function process_data()
+    local max_turns = MAX_TURNS  -- Cache global
+    local board = Board          -- Cache table
+    -- Use locals for repeated access
 end
 
--- Avoid creating tables in loops
-local function process_items(items)
-    local results = {}
-    local size = #items
-    for i = 1, size do
-        -- Reuse table if possible
-        results[#results + 1] = transform(items[i])
-    end
-    return results
-end
-
--- Use C-based numeric for loop for array iteration
-local size = #array
-for i = 1, size do
-    -- Process array[i]
+-- ✅ DO: Cache table values if accessed more than once
+-- Accessing a table value twice is ~30% slower than caching
+local function update_ui()
+    local hands = Hands  -- Cache once
+    local player1_hand = hands[1]
+    local player2_hand = hands[2]
+    -- ... use cached values
 end
 ```
+
+### String Manipulation
+
+```lua
+-- ✅ DO: Use .. (concatenation) for small strings
+-- string.format is ~62-120% slower for 2-8 small strings
+local output = "Invalid move: " .. err
+local menu = "\nStandby Phase - Player " .. Player_turn ..
+    "\n\nSelect Action:\n" ..
+    "  [1] " .. options[1] .. "\n" ..
+    "  [2] " .. options[2]
+
+-- ❌ DON'T: Use string.format for simple string concatenation
+local output = string.format("Invalid move: %s", err)  -- Slower
+
+-- ✅ DO: Use string.format for concatenating numbers
+-- .. with tostring is ~50% slower for 2 numbers, ~100% slower for 4
+local message = string.format("Player %d has %d cards", player_id, card_count)
+
+-- NOTE: tostring(n) and string.format("%d", n) have similar performance
+```
+
+### Functions & Arguments
+
+```lua
+-- ✅ DO: Prefer procedural style over OOP/POOP style
+-- Standard Lua POOP style is ~10% slower
+local function process_card(card)  -- Procedural
+    -- ...
+end
+
+-- ❌ DON'T: Use POOP style unnecessarily
+-- Card.process(card)  -- ~10% slower
+
+-- ✅ DO: Minimize function arguments
+-- Argument cost is exponential:
+-- 1 int: ~7% | 4 ints: ~64% | 8 ints: ~110%
+local function validate_move(from, to)  -- 2 args - OK
+    -- ...
+end
+
+-- ❌ DON'T: Pass too many arguments
+-- local function validate(from, to, player, hand, board, card, mode, flags)  -- 8 args - 110% slower
+
+-- ✅ DO: Pass numbers instead of string representations
+-- Passing "123" is ~4% slower than passing 123
+local function set_value(num)
+    -- Use num directly, not tonumber(num)
+end
+
+-- ✅ DO: Avoid declaring unused function arguments
+-- Declaring unused args is ~5% slower (with 4 int args)
+local function callback(event, data)  -- Only use what you need
+    if event == "click" then
+        handle_click(data)
+    end
+end
+
+-- ✅ DO: Choose callback handling based on existence probability
+-- If functions usually exist: use dummy function
+local dummy = function() end
+local on_update = config.on_update or dummy
+on_update()  -- Check for false is ~10% slower
+
+-- If functions usually don't exist: check for false
+if config.on_error then
+    config.on_error(err)
+end  -- Using dummy is ~30% slower when function doesn't exist
+```
+
+### Iteration
+
+```lua
+-- ✅ DO: Use C-based loops for arrays (project standard)
+local size = #array
+for i = 1, size do
+    process(array[i])
+end
+
+-- NOTE: ipairs and pairs have same performance for arrays
+-- NOTE: pairs on array is ~140% faster than on generic table
+-- Prefer arrays over hash tables for iterable data
+
+-- ✅ DO: Use table.concat for building strings from many parts
+local function build_menu(options)
+    local parts = {}
+    local size = #options
+    for i = 1, size do
+        parts[i] = "  [" .. i .. "] " .. options[i]
+    end
+    return table.concat(parts, "\n")
+end
+```
+
+### General Testing Notes
+
+- Run performance tests during initialization (up to 4000ms runtime)
+- Lua VM performance varies over time
+- Do not compare absolute values between different test sets
+- Profile before optimizing
 
 ---
 

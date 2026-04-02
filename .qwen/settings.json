@@ -11,7 +11,8 @@
       "Bash(luacheck *)",
       "Bash(git add *)",
       "Bash(git commit *)",
-      "Bash(mv *)"
+      "Bash(mv *)",
+      "WebFetch(github.com)"
     ]
   },
   "$version": 3

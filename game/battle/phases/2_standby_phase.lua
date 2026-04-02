@@ -1,9 +1,9 @@
---- Place an animal card from hand onto a field
+--- Place a card from hand onto a field
 -- Uses globals: Player_turn, Hands, Board
 -- @param hand_index number Index in hand (1-4)
 -- @param field_index number Field slot (1-6)
 -- @return boolean Success
-local _set_animal = function(hand_index, field_index)
+local _set_card = function(hand_index, field_index)
     hand_index = hand_index or 1
     field_index = field_index or 1
 
@@ -17,7 +17,7 @@ local _set_animal = function(hand_index, field_index)
         return false
     end
 
-    fieldsOps.set_animal(field_index, card)
+    fieldsOps.set_card(field_index, card)
 
     -- Remove card from hand by swapping with last element
     if hand_index < len then
@@ -28,22 +28,22 @@ local _set_animal = function(hand_index, field_index)
     return true
 end
 
---- Remove an animal from a field and return it to hand
+--- Remove a card from a field and return it to hand
 -- Uses globals: Player_turn, Hands, Board
 -- @param field_index number Field slot (1-6)
 -- @return boolean Success
-local _remove_animal = function(field_index)
+local _remove_card = function(field_index)
     field_index = field_index or 1
 
     local hand = Hands[Player_turn]
 
-    local valid, err = standbyValidation.validate_remove_animal(field_index)
+    local valid, err = standbyValidation.validate_remove_card(field_index)
     if not valid then
         UI.display('Invalid move: ' .. err)
         return false
     end
 
-    local removed = fieldsOps.remove_animal(field_index)
+    local removed = fieldsOps.remove_card(field_index)
     if removed then
         hand[#hand + 1] = removed
     end
@@ -51,18 +51,18 @@ local _remove_animal = function(field_index)
     return true
 end
 
---- Move an animal from one field to another (swap positions)
+--- Move a card from one field to another (swap positions)
 -- Uses globals: Player_turn, Board, fieldsOps, UI, standbyValidation
 -- @param from_field number Source field slot (1-6)
 -- @param to_field number Destination field slot (1-6)
 -- @return boolean Success
-local _move_animal = function(from_field, to_field)
+local _move_card = function(from_field, to_field)
     from_field = from_field or 1
     to_field = to_field or 2
 
-    -- Validate source field has an animal
+    -- Validate source field has a card
     if fieldsOps.is_empty(from_field) then
-        UI.display('Invalid move: No animal on source field')
+        UI.display('Invalid move: No card on source field')
         return false
     end
 
@@ -108,19 +108,21 @@ end
 
 --- Standby phase - player action phase
 -- Uses globals: Player_turn, Hands, Board, UI, BUILD
--- Players can set animals, remove animals, move animals, or move fields
+-- Players can set cards, remove cards, move cards, or move fields
 -- NOTE: This file is concatenated in build - do NOT return at file end
 local standby = function()
     -- Define action options and handlers
-    local options = {'Set Animal', 'Move Animal', 'Remove Animal', 'Move Field'}
-    local actions = { _set_animal, _move_animal, _remove_animal, _move_field }
-    local action_count = #actions
+    local options = { 'Set Card', 'Move Card', 'Remove Card', 'Move Field' }
+    local actions = { _set_card, _move_card, _remove_card, _move_field }
 
     -- Build menu output using C-based loop
-    local output = string.format("\nStandby Phase - Player %d\n\nSelect Action:\n", Player_turn)
-    for i = 1, action_count do
-        output = output .. string.format("  [%d] %s\n", i, options[i])
-    end
+    -- Build menu output
+    local output = "\nStandby Phase - Player " .. Player_turn ..
+        "\n\nSelect Action:\n" ..
+        "  [1] " .. options[1] .. "\n" ..
+        "  [2] " .. options[2] .. "\n" ..
+        "  [3] " .. options[3] .. "\n" ..
+        "  [4] " .. options[4] .. "\n"
 
     UI.update_menu(output)
     _update_ui()

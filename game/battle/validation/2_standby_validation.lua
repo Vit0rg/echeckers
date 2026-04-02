@@ -8,7 +8,10 @@ local standbyValidation = {}
 -- @param index number Field slot to validate
 -- @return boolean True if valid
 function standbyValidation.valid_field_index(index)
-    return type(index) == 'number' and index >= 1 and index <= 6
+    local min_index = 1
+    local max_index = 6
+    return type(index) == 'number' and 
+            min_index >= 1 and max_index <= 6
 end
 
 --- Validate set animal operation
