@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Step 9 - Critical Bug Fixes
+
+### Fixed
+- **Standby Validation** (`game/battle/validation/2_standby_validation.lua`)
+  - Fixed `valid_field_index()` always returning true (compared constants to themselves)
+  - Renamed `validate_remove_animal()` → `validate_remove_card()` for consistency
+
+- **Setup Phase** (`game/battle/phases/0_setup.lua`)
+  - Fixed `Trashs` typo → `Trash` in `_setup_trash()`
+  - Simplified initialization: `Trash = { {}, {} }`
+
+- **Draw Phase** (`game/battle/phases/1_draw_phase.lua`)
+  - Fixed `_discard()` infinite recursion (called itself with no exit)
+  - Replaced with placeholder message until proper discard logic is implemented
+
+- **Standby Phase** (`game/battle/phases/2_standby_phase.lua`)
+  - Fixed `input` being nil for non-TUI builds (was missing default value)
+  - Optimized `_shuffle_hand()` to use local `hand` reference instead of global lookup
+  - Added destination field occupancy check to `_move_card()`
+  - Moved `options` and `actions` tables to file-level scope (no longer recreated per call)
+
+### Benefits
+- **All 5 critical runtime crashes resolved** - standby phase now functional
+- **Validation restored** - field index bounds checking works correctly
+- **Card removal works** - Trash global properly initialized
+- **Performance improved** - reduced global lookups and table allocations
+
 ### Step 8.13 - Field Terminology Standardization
 
 ### Changed

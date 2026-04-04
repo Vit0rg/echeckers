@@ -10,14 +10,14 @@ This document describes the **current operational workflow** for the echeckers p
 
 | Agent | Role | Primary Responsibility |
 |-------|------|----------------------|
+| **Architect Agent** | Architecture Guardian | Global state, dependencies, approval |
 | **Code Agent** | Implementation Specialist | Source code in `game/` directory |
 | **Build Agent** | Build System Guardian | Build scripts and configurations |
+| **Dry-Run Test Agent** | Integration Validator | Bundle-level validation |
 | **Test Agent** | Validation Specialist | Automated testing and validation |
 | **Quality Agent** | Code Quality Guardian | Quality checks and review tracking |
-| **Docs Agent** | Documentation Synchronizer | Documentation maintenance |
-| **Architect Agent** | Architecture Guardian | Global state and dependencies |
-| **Release Agent** | Release Coordinator | Release preparation and deployment |
-| **Dry-Run Test Agent** | Integration Validator | Bundle-level validation |
+| **Docs Agent** | Documentation Synchronizer | Changelog, TODO files, API docs |
+| **Release Agent** | Release Coordinator | Commit preparation (only when prompted) |
 
 ---
 
@@ -115,17 +115,18 @@ This document describes the **current operational workflow** for the echeckers p
 │  ════════════════════════                                    │
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │ Docs Agent                                            │   │
-│  │ - Update changelog.md                                 │   │
-│  │ - Sync TODO_micro.md                                  │   │
-│  │ - Generate API docs                                   │   │
-│  │ - Update architecture docs                            │   │
+│  │ - Update changelog.md (every change)                  │   │
+│  │ - Sync TODO_macro.md and TODO_micro.md                │   │
+│  │ - Generate API docs if public API changed             │   │
+│  │ - Update architecture docs if structure changed       │   │
+│  │ - Update reviews.md if review findings resolved       │   │
 │  └──────────────────────────────────────────────────────┘   │
 │                          │                                   │
 │                          ▼                                   │
 │  PHASE 5: COMMIT                                             │
 │  ════════════                                                │
 │  ┌──────────────────────────────────────────────────────┐   │
-│  │ Release Agent                                         │   │
+│  │ Release Agent (only when explicitly prompted)         │   │
 │  │ - Verify all gates passed                             │   │
 │  │ - Prepare commit message                              │   │
 │  │ - Create commit with proper format                    │   │
@@ -369,15 +370,16 @@ PRIORITY: [critical | high | normal | low]
 
 ### Active Agents
 
-All 7 agents are **ACTIVE** and operational:
+All agents are **ACTIVE** and operational:
 
-- ✅ **Code Agent** - Ready for implementation tasks
+- ✅ **Architect Agent** - Global state and architecture oversight
+- ✅ **Code Agent** - Source code implementation
 - ✅ **Build Agent** - Build system maintained
+- ✅ **Dry-Run Test Agent** - Bundle validation configured
 - ✅ **Test Agent** - Test framework ready
 - ✅ **Quality Agent** - Quality checks configured
-- ✅ **Docs Agent** - Documentation synchronized
-- ✅ **Architect Agent** - Global state registry active
-- ✅ **Release Agent** - Release workflow ready
+- ✅ **Docs Agent** - Changelog, TODO, and reviews synchronized
+- ⏸️ **Release Agent** - Invoked only when explicitly prompted
 
 ### Global State Registry
 
@@ -406,10 +408,37 @@ All 7 agents are **ACTIVE** and operational:
 **Required for all commits:**
 1. ✅ Syntax validation (lua -p)
 2. ✅ Build success (both Bash and PowerShell)
-3. ✅ Unit tests passing
-4. ✅ Global state validation
-5. ✅ Quality checks (luacheck + anti-patterns)
-6. ✅ Documentation updated
+3. ✅ Dry-Run Tests passed (9/9 checks)
+4. ✅ Unit tests passing
+5. ✅ Global state validation
+6. ✅ Quality checks (luacheck + anti-patterns)
+7. ✅ Documentation updated (changelog, TODO, reviews)
+
+### Changelog Format
+
+Every change must be documented in `development/changelog.md`:
+
+```markdown
+### Step N - [Title]
+
+### Fixed
+- **Module** (`path/to/file.lua`)
+  - Description of fix
+
+### Added
+- **Module** (`path/to/file.lua`)
+  - Description of addition
+
+### Changed
+- **Module** (`path/to/file.lua`)
+  - Description of change
+
+### Benefits
+- Benefit 1
+- Benefit 2
+```
+
+**Rule:** Changelog must be updated BEFORE Release Agent commits.
 
 ---
 
@@ -438,10 +467,14 @@ All 7 agents are **ACTIVE** and operational:
 
 ### For Bug Fixes
 
-1. **Quality Agent identifies issue**
-2. **Code Agent implements fix**
-3. **Test Agent validates**
-4. **Release Agent commits**
+1. **Quality Agent identifies issue** (or review findings)
+2. **Architect Agent approves scope**
+3. **Code Agent implements fix**
+4. **Build Agent verifies build**
+5. **Dry-Run Test Agent validates bundle**
+6. **Test Agent confirms fix**
+7. **Docs Agent updates changelog and reviews.md**
+8. **Release Agent commits** (when prompted)
 
 ### For Releases
 
