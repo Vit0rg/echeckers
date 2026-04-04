@@ -2061,16 +2061,16 @@ local _shuffle_hand = function()
         deck[#deck + 1] = hand[i]
     end
 
-    -- Clear the hand
-    for i = hand_size, 1, -1 do
-        hand[i] = nil
-    end
-
-    -- Draw new cards of the same size
+    -- Draw new cards of the same size, overwriting existing indices
     for i = 1, hand_size do
         if #deck > 0 then
             _draw_card(Player_turn)
+            hand[i] = Hands[Player_turn][#Hands[Player_turn]]
         else
+            -- Deck is empty, trim hand to remaining cards
+            for j = i, hand_size do
+                hand[j] = nil
+            end
             UI.display('Deck is empty, hand reduced')
             break
         end
