@@ -1835,10 +1835,7 @@ local standbyValidation = {}
 -- @param index number Field slot to validate
 -- @return boolean True if valid
 function standbyValidation.valid_field_index(index)
-    local min_index = 1
-    local max_index = 6
-    return type(index) == 'number' and 
-            min_index >= 1 and max_index <= 6
+    return type(index) == 'number' and index >= 1 and index <= 6
 end
 
 --- Validate set animal operation
@@ -1877,7 +1874,7 @@ end
 -- @param field_index number Field slot (1-6)
 -- @return boolean valid
 -- @return string|nil error message
-function standbyValidation.validate_remove_animal(field_index)
+function standbyValidation.validate_remove_card(field_index)
     -- Validate field index
     if not standbyValidation.valid_field_index(field_index) then
         return false, 'Invalid field index (1-6)'
@@ -1985,9 +1982,7 @@ local function _setup_ui()
 end
 
 local _setup_trash = function()
-    Trashs = { true, true }
-    Trashs[1] = {}
-    Trashs[2] = {}
+    Trash = { {}, {} }
 end
 
 local function setup()
@@ -2024,8 +2019,7 @@ end
 
 local _discard = function ()
     if #Hands[Player_turn] > HAND_LIMIT then
-        UI.display("Discard one")
-        _discard()
+        UI.display("Discard one card (not yet implemented)")
     end
 end
 
@@ -2039,6 +2033,7 @@ end
 -- /home/s1eep1ess/workspace/lua/echeckers/game/battle/phases/2_standby_phase.lua
 -- Skip standby phase
 local _skip_standby = function ()
+    UI.display("Skipped Standby turn")
     return 0
 end
 
@@ -2050,30 +2045,15 @@ local _shuffle_hand = function()
     local deck = Decks[Player_turn]
     local hand_size = #hand
 
-    -- If hand is empty, nothing to shuffle
-    if hand_size == 0 then
-        UI.display('Hand is empty, skipping')
-        return 0
-    end
-
     -- Return all cards from hand to deck
     for i = 1, hand_size do
         deck[#deck + 1] = hand[i]
     end
 
-    -- Draw new cards of the same size, overwriting existing indices
+    -- Draw new cards, overwriting existing indices
     for i = 1, hand_size do
-        if #deck > 0 then
-            _draw_card(Player_turn)
-            hand[i] = Hands[Player_turn][#Hands[Player_turn]]
-        else
-            -- Deck is empty, trim hand to remaining cards
-            for j = i, hand_size do
-                hand[j] = nil
-            end
-            UI.display('Deck is empty, hand reduced')
-            break
-        end
+        _draw_card(Player_turn)
+        hand[i] = hand[#hand]
     end
 
     return 0
@@ -2147,7 +2127,12 @@ local _move_card = function(from_field, to_field)
         return false
     end
 
-    -- Validate destination field index and different from source
+    -- Validate destination field is empty and index is valid
+    if fieldsOps.is_empty(to_field) == false then
+        UI.display('Invalid move: Destination field is occupied')
+        return false
+    end
+
     if not standbyValidation.valid_field_index(to_field) then
         UI.display('Invalid move: Destination field must be 1-6')
         return false
@@ -2187,17 +2172,17 @@ local _update_ui = function()
     UI.update_hand(Hands[1])
 end
 
+-- Action options and handlers (file-level constants)
+local options = { 'Set Card', 'Move Card', 'Remove Card',
+                  'Move Field', 'Shuffle Hand', 'Skip Phase' }
+local actions = { _set_card, _move_card, _remove_card,
+                  _move_field, _shuffle_hand, _skip_standby }
+
 --- Standby phase - player action phase
 -- Uses globals: Player_turn, Hands, Board, UI, BUILD
 -- Players can set cards, remove cards, move cards, or move fields
 -- NOTE: This file is concatenated in build - do NOT return at file end
 local standby = function()
-    -- Define action options and handlers
-    local options = { 'Set Card', 'Move Card', 'Remove Card',
-                      'Move Field', 'Shuffle Hand', 'Skip Phase' }
-    local actions = { _set_card, _move_card, _remove_card,
-                      _move_field, _shuffle_hand, _skip_standby }
-
     -- Build menu output using string concatenation
     local output = "\nStandby Phase - Player " .. Player_turn ..
         "\n\nSelect Action:\n" ..
@@ -2212,11 +2197,9 @@ local standby = function()
     _update_ui()
 
     -- Get player input (1-6)
-    local input
+    local input = 1  -- Default placeholder
     if BUILD == 'TUI' then
         -- TODO: Integrate with UI.input() for actual input
-        -- For now, default to first option as placeholder
-        input = 1
     end
 
     -- Validate input and execute selected action

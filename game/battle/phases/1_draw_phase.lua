@@ -7,8 +7,7 @@ end
 
 local _discard = function ()
     if #Hands[Player_turn] > HAND_LIMIT then
-        UI.display("Discard one")
-        _discard()
+        UI.display("Discard one card (not yet implemented)")
     end
 end
 

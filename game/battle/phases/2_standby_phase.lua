@@ -18,10 +18,9 @@ local _shuffle_hand = function()
     end
 
     -- Draw new cards, overwriting existing indices
-    -- Deck is guaranteed to have enough cards since hand was returned
     for i = 1, hand_size do
         _draw_card(Player_turn)
-        hand[i] = Hands[Player_turn][#Hands[Player_turn]]
+        hand[i] = hand[#hand]
     end
 
     return 0
@@ -95,7 +94,12 @@ local _move_card = function(from_field, to_field)
         return false
     end
 
-    -- Validate destination field index and different from source
+    -- Validate destination field is empty and index is valid
+    if fieldsOps.is_empty(to_field) == false then
+        UI.display('Invalid move: Destination field is occupied')
+        return false
+    end
+
     if not standbyValidation.valid_field_index(to_field) then
         UI.display('Invalid move: Destination field must be 1-6')
         return false
@@ -135,17 +139,17 @@ local _update_ui = function()
     UI.update_hand(Hands[1])
 end
 
+-- Action options and handlers (file-level constants)
+local options = { 'Set Card', 'Move Card', 'Remove Card',
+                  'Move Field', 'Shuffle Hand', 'Skip Phase' }
+local actions = { _set_card, _move_card, _remove_card,
+                  _move_field, _shuffle_hand, _skip_standby }
+
 --- Standby phase - player action phase
 -- Uses globals: Player_turn, Hands, Board, UI, BUILD
 -- Players can set cards, remove cards, move cards, or move fields
 -- NOTE: This file is concatenated in build - do NOT return at file end
 local standby = function()
-    -- Define action options and handlers
-    local options = { 'Set Card', 'Move Card', 'Remove Card',
-                      'Move Field', 'Shuffle Hand', 'Skip Phase' }
-    local actions = { _set_card, _move_card, _remove_card,
-                      _move_field, _shuffle_hand, _skip_standby }
-
     -- Build menu output using string concatenation
     local output = "\nStandby Phase - Player " .. Player_turn ..
         "\n\nSelect Action:\n" ..
@@ -160,11 +164,9 @@ local standby = function()
     _update_ui()
 
     -- Get player input (1-6)
-    local input
+    local input = 1  -- Default placeholder
     if BUILD == 'TUI' then
         -- TODO: Integrate with UI.input() for actual input
-        -- For now, default to first option as placeholder
-        input = 1
     end
 
     -- Validate input and execute selected action

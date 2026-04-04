@@ -58,9 +58,7 @@ local function _setup_ui()
 end
 
 local _setup_trash = function()
-    Trashs = { true, true }
-    Trashs[1] = {}
-    Trashs[2] = {}
+    Trash = { {}, {} }
 end
 
 local function setup()

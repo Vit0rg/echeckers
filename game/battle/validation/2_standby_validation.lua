@@ -8,10 +8,7 @@ local standbyValidation = {}
 -- @param index number Field slot to validate
 -- @return boolean True if valid
 function standbyValidation.valid_field_index(index)
-    local min_index = 1
-    local max_index = 6
-    return type(index) == 'number' and 
-            min_index >= 1 and max_index <= 6
+    return type(index) == 'number' and index >= 1 and index <= 6
 end
 
 --- Validate set animal operation
@@ -50,7 +47,7 @@ end
 -- @param field_index number Field slot (1-6)
 -- @return boolean valid
 -- @return string|nil error message
-function standbyValidation.validate_remove_animal(field_index)
+function standbyValidation.validate_remove_card(field_index)
     -- Validate field index
     if not standbyValidation.valid_field_index(field_index) then
         return false, 'Invalid field index (1-6)'
