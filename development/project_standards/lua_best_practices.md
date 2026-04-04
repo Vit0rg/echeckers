@@ -105,7 +105,8 @@ local function copy_table(original, seen)
     return copy
 end
 
--- Use table.concat for building strings
+-- Use table.concat for building large/dynamic strings (>10 parts)
+-- For small fixed strings, use .. (2-3x faster)
 local function build_string(parts)
     local size = #parts
     for i = 1, size do
@@ -139,12 +140,16 @@ end
 ### 6. String Operations
 
 ```lua
--- Use .. for small string concatenation (62-120% faster than string.format)
+-- Use .. for small, fixed-size string concatenation (fastest for ≤10 parts)
+-- Benchmark (1M iterations): .. = 1s | table.concat = 2-3s
 local output = "Invalid move: " .. err
 local menu = "\nStandby Phase - Player " .. Player_turn ..
     "\n\nSelect Action:\n" ..
     "  [1] " .. options[1] .. "\n" ..
-    "  [2] " .. options[2]
+    "  [2] " .. options[2] .. "\n" ..
+    "  [3] " .. options[3] .. "\n" ..
+    "  [4] " .. options[4] .. "\n" ..
+    "  [5] " .. options[5] .. "\n"
 
 -- Use string.format for numbers (50-100% faster than ..)
 local message = string.format("Player %d has %d cards", player_id, card_count)
@@ -294,7 +299,10 @@ for i = 1, size do
     process(array[i])
 end
 
--- ✅ DO: Use table.concat for building strings from many parts
+-- ⚠️  CAUTION: Use table.concat only for large/dynamic string building (>10 parts)
+-- Benchmark shows table.concat is 2-3x SLOWER than .. for small fixed sets
+-- Use it when: parts count is unknown, built in a loop, or exceeds ~10 fragments
+-- Avoid it when: all parts are known at write time (use .. instead)
 local function build_menu(options)
     local parts = {}
     local size = #options

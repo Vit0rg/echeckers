@@ -1,3 +1,45 @@
+-- Skip standby phase
+local _skip_standby = function ()
+    return 0
+end
+
+--- Send current hand to deck and draw a new hand of same size
+-- Uses globals: Player_turn, Hands, Decks
+-- @return number 0 on success
+local _shuffle_hand = function()
+    local hand = Hands[Player_turn]
+    local deck = Decks[Player_turn]
+    local hand_size = #hand
+
+    -- If hand is empty, nothing to shuffle
+    if hand_size == 0 then
+        UI.display('Hand is empty, skipping')
+        return 0
+    end
+
+    -- Return all cards from hand to deck
+    for i = 1, hand_size do
+        deck[#deck + 1] = hand[i]
+    end
+
+    -- Clear the hand
+    for i = hand_size, 1, -1 do
+        hand[i] = nil
+    end
+
+    -- Draw new cards of the same size
+    for i = 1, hand_size do
+        if #deck > 0 then
+            _draw_card(Player_turn)
+        else
+            UI.display('Deck is empty, hand reduced')
+            break
+        end
+    end
+
+    return 0
+end
+
 --- Place a card from hand onto a field
 -- Uses globals: Player_turn, Hands, Board
 -- @param hand_index number Index in hand (1-4)
@@ -28,14 +70,14 @@ local _set_card = function(hand_index, field_index)
     return true
 end
 
---- Remove a card from a field and return it to hand
+--- Remove a card from a field and send it to trash
 -- Uses globals: Player_turn, Hands, Board
 -- @param field_index number Field slot (1-6)
 -- @return boolean Success
 local _remove_card = function(field_index)
     field_index = field_index or 1
 
-    local hand = Hands[Player_turn]
+    local trash = Trash[Player_turn]
 
     local valid, err = standbyValidation.validate_remove_card(field_index)
     if not valid then
@@ -45,7 +87,7 @@ local _remove_card = function(field_index)
 
     local removed = fieldsOps.remove_card(field_index)
     if removed then
-        hand[#hand + 1] = removed
+        trash[#trash + 1] = removed
     end
 
     return true
@@ -112,41 +154,42 @@ end
 -- NOTE: This file is concatenated in build - do NOT return at file end
 local standby = function()
     -- Define action options and handlers
-    local options = { 'Set Card', 'Move Card', 'Remove Card', 'Move Field' }
-    local actions = { _set_card, _move_card, _remove_card, _move_field }
+    local options = { 'Set Card', 'Move Card', 'Remove Card',
+                      'Move Field', 'Shuffle Hand', 'Skip Phase' }
+    local actions = { _set_card, _move_card, _remove_card,
+                      _move_field, _shuffle_hand, _skip_standby }
 
-    -- Build menu output using C-based loop
-    -- Build menu output
+    -- Build menu output using string concatenation
     local output = "\nStandby Phase - Player " .. Player_turn ..
         "\n\nSelect Action:\n" ..
         "  [1] " .. options[1] .. "\n" ..
         "  [2] " .. options[2] .. "\n" ..
         "  [3] " .. options[3] .. "\n" ..
-        "  [4] " .. options[4] .. "\n"
+        "  [4] " .. options[4] .. "\n" ..
+        "  [5] " .. options[5] .. "\n" ..
+        "  [6] " .. options[6] .. "\n"
 
     UI.update_menu(output)
     _update_ui()
 
-    -- Get player input (1-4)
+    -- Get player input (1-6)
     local input
     if BUILD == 'TUI' then
         -- TODO: Integrate with UI.input() for actual input
         -- For now, default to first option as placeholder
         input = 1
-    else
-        input = 1
     end
 
     -- Validate input and execute selected action
+    local action_count = #actions
     if input >= 1 and input <= action_count then
         -- Execute action with default parameters
         -- TODO: Pass actual parameters from user input
-        local success = actions[input]()
+        actions[input]()
         _update_ui()
-        return success
+        return
     end
 
     UI.display('Invalid selection')
-    return false
 end
 -- DO NOT add 'return standby' - this file is concatenated in build process

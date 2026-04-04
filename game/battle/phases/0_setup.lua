@@ -1,13 +1,13 @@
 --[[
 This file should be called when duel starts
-Biomes, decks and items should be saved as globals
+Fields, decks and items should be saved as globals
 The rest should be unloaded
 ]]
 
-local function _setup_biomes()
-    Biomes = {}
-    Biomes[1] = get_random_biomes()
-    Biomes[2] = get_random_biomes()
+local function _setup_fields()
+    Fields = {}
+    Fields[1] = get_random_fields()
+    Fields[2] = get_random_fields()
 end
 
 local function _setup_decks()
@@ -33,7 +33,7 @@ end
 
 local function _setup_board(MODE)
     if MODE == 'basic' then
-        Board = boardModule.init(Biomes[1], Biomes[2])
+        Board = boardModule.init(Fields[1], Fields[2])
     end
 end
 
@@ -65,23 +65,24 @@ end
 
 local function setup()
     if MODE == 'basic' then
-        _setup_biomes()
+        _setup_fields()
         _setup_decks()
         _setup_starter()
         _setup_board(MODE)
         _setup_hands()
+        _setup_trash()
         _setup_ui()
     end
 
     if MODE == 'elemental' then
-        return 1
-    end
-
-    if MODE == 'astrological' then
         return 2
     end
 
-    if MODE == 'advanced' then
+    if MODE == 'astrological' then
         return 3
+    end
+
+    if MODE == 'advanced' then
+        return 4
     end
 end

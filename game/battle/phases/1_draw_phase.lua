@@ -6,10 +6,6 @@ local _update_ui = function ()
 end
 
 local _discard = function ()
-    return
-end
-
-local _check_hand_size = function ()
     if #Hands[Player_turn] > HAND_LIMIT then
         UI.display("Discard one")
         _discard()

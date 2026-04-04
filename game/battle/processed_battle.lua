@@ -1927,14 +1927,14 @@ end
 -- /home/s1eep1ess/workspace/lua/echeckers/game/battle/phases/0_setup.lua
 --[[
 This file should be called when duel starts
-Biomes, decks and items should be saved as globals
+Fields, decks and items should be saved as globals
 The rest should be unloaded
 ]]
 
-local function _setup_biomes()
-    Biomes = {}
-    Biomes[1] = get_random_biomes()
-    Biomes[2] = get_random_biomes()
+local function _setup_fields()
+    Fields = {}
+    Fields[1] = get_random_fields()
+    Fields[2] = get_random_fields()
 end
 
 local function _setup_decks()
@@ -1960,7 +1960,7 @@ end
 
 local function _setup_board(MODE)
     if MODE == 'basic' then
-        Board = boardModule.init(Biomes[1], Biomes[2])
+        Board = boardModule.init(Fields[1], Fields[2])
     end
 end
 
@@ -1992,24 +1992,25 @@ end
 
 local function setup()
     if MODE == 'basic' then
-        _setup_biomes()
+        _setup_fields()
         _setup_decks()
         _setup_starter()
         _setup_board(MODE)
         _setup_hands()
+        _setup_trash()
         _setup_ui()
     end
 
     if MODE == 'elemental' then
-        return 1
-    end
-
-    if MODE == 'astrological' then
         return 2
     end
 
-    if MODE == 'advanced' then
+    if MODE == 'astrological' then
         return 3
+    end
+
+    if MODE == 'advanced' then
+        return 4
     end
 end
 
@@ -2022,10 +2023,6 @@ local _update_ui = function ()
 end
 
 local _discard = function ()
-    return
-end
-
-local _check_hand_size = function ()
     if #Hands[Player_turn] > HAND_LIMIT then
         UI.display("Discard one")
         _discard()
@@ -2040,6 +2037,48 @@ local draw = function ()
     end
 end
 -- /home/s1eep1ess/workspace/lua/echeckers/game/battle/phases/2_standby_phase.lua
+-- Skip standby phase
+local _skip_standby = function ()
+    return 0
+end
+
+--- Send current hand to deck and draw a new hand of same size
+-- Uses globals: Player_turn, Hands, Decks
+-- @return number 0 on success
+local _shuffle_hand = function()
+    local hand = Hands[Player_turn]
+    local deck = Decks[Player_turn]
+    local hand_size = #hand
+
+    -- If hand is empty, nothing to shuffle
+    if hand_size == 0 then
+        UI.display('Hand is empty, skipping')
+        return 0
+    end
+
+    -- Return all cards from hand to deck
+    for i = 1, hand_size do
+        deck[#deck + 1] = hand[i]
+    end
+
+    -- Clear the hand
+    for i = hand_size, 1, -1 do
+        hand[i] = nil
+    end
+
+    -- Draw new cards of the same size
+    for i = 1, hand_size do
+        if #deck > 0 then
+            _draw_card(Player_turn)
+        else
+            UI.display('Deck is empty, hand reduced')
+            break
+        end
+    end
+
+    return 0
+end
+
 --- Place a card from hand onto a field
 -- Uses globals: Player_turn, Hands, Board
 -- @param hand_index number Index in hand (1-4)
@@ -2070,14 +2109,14 @@ local _set_card = function(hand_index, field_index)
     return true
 end
 
---- Remove a card from a field and return it to hand
+--- Remove a card from a field and send it to trash
 -- Uses globals: Player_turn, Hands, Board
 -- @param field_index number Field slot (1-6)
 -- @return boolean Success
 local _remove_card = function(field_index)
     field_index = field_index or 1
 
-    local hand = Hands[Player_turn]
+    local trash = Trash[Player_turn]
 
     local valid, err = standbyValidation.validate_remove_card(field_index)
     if not valid then
@@ -2087,7 +2126,7 @@ local _remove_card = function(field_index)
 
     local removed = fieldsOps.remove_card(field_index)
     if removed then
-        hand[#hand + 1] = removed
+        trash[#trash + 1] = removed
     end
 
     return true
@@ -2154,42 +2193,43 @@ end
 -- NOTE: This file is concatenated in build - do NOT return at file end
 local standby = function()
     -- Define action options and handlers
-    local options = { 'Set Card', 'Move Card', 'Remove Card', 'Move Field' }
-    local actions = { _set_card, _move_card, _remove_card, _move_field }
+    local options = { 'Set Card', 'Move Card', 'Remove Card',
+                      'Move Field', 'Shuffle Hand', 'Skip Phase' }
+    local actions = { _set_card, _move_card, _remove_card,
+                      _move_field, _shuffle_hand, _skip_standby }
 
-    -- Build menu output using C-based loop
-    -- Build menu output
+    -- Build menu output using string concatenation
     local output = "\nStandby Phase - Player " .. Player_turn ..
         "\n\nSelect Action:\n" ..
         "  [1] " .. options[1] .. "\n" ..
         "  [2] " .. options[2] .. "\n" ..
         "  [3] " .. options[3] .. "\n" ..
-        "  [4] " .. options[4] .. "\n"
+        "  [4] " .. options[4] .. "\n" ..
+        "  [5] " .. options[5] .. "\n" ..
+        "  [6] " .. options[6] .. "\n"
 
     UI.update_menu(output)
     _update_ui()
 
-    -- Get player input (1-4)
+    -- Get player input (1-6)
     local input
     if BUILD == 'TUI' then
         -- TODO: Integrate with UI.input() for actual input
         -- For now, default to first option as placeholder
         input = 1
-    else
-        input = 1
     end
 
     -- Validate input and execute selected action
+    local action_count = #actions
     if input >= 1 and input <= action_count then
         -- Execute action with default parameters
         -- TODO: Pass actual parameters from user input
-        local success = actions[input]()
+        actions[input]()
         _update_ui()
-        return success
+        return
     end
 
     UI.display('Invalid selection')
-    return false
 end
 -- DO NOT add 'return standby' - this file is concatenated in build process
 
