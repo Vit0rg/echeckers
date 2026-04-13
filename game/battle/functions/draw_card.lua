@@ -1,17 +1,24 @@
-local _draw_card = function(turn)
-    if #Decks[turn] == 0 then
-        UI.display('No cards on deck, skipping')
-        return
-    end
+-- Draw card(s) from a deck table into a hand table
+-- @param deck table The deck to draw from
+-- @param hand table The hand to draw into
+-- @param count number? Number of cards to draw (default 1)
+-- @return nil
+local _draw_card = function(deck, hand, count)
+    count = count or 1
 
-    local idx = 1
-    local deck_size = #Decks[turn]
+    for i = 1, count do
+        if #deck == 0 then
+            UI.display('No cards on deck, skipping')
+            break
+        end
 
-    Hands[turn][(#Hands[turn])+1] = process_card(Decks[turn][idx])
+        local idx = 1
+        local deck_size = #deck
 
-    -- O(1) removal: swap with last element instead of shifting
-    if deck_size > 0 then
-        Decks[turn][idx] = Decks[turn][deck_size]
-        Decks[turn][deck_size] = nil
+        hand[#hand + 1] = process_card(deck[idx])
+
+        -- O(1) removal: swap with last element instead of shifting
+        deck[idx] = deck[deck_size]
+        deck[deck_size] = nil
     end
 end

@@ -83,6 +83,51 @@ function boardModule.set_field_card(slot, card)
     end
 end
 
+--- Alias: set_card for backward compatibility
+function boardModule.set_card(slot, card)
+    boardModule.set_field_card(slot, card)
+end
+
+--- Check if field has no card
+-- @param slot number (1-6)
+-- @return boolean
+function boardModule.is_empty(slot)
+    local field = boardModule.get_field(slot)
+    return not field or field.card == nil
+end
+
+--- Remove card from field
+-- @param slot number (1-6)
+-- @return table|nil Removed card
+function boardModule.remove_card(slot)
+    local field = boardModule.get_field(slot)
+    if not field or not field.card then return nil end
+    local removed = field.card
+    field.card = nil
+    return removed
+end
+
+--- Alias: move (swap) for backward compatibility
+function boardModule.move(from, to)
+    boardModule.swap_fields(from, to)
+end
+
+--- Get card on field
+-- @param slot number (1-6)
+-- @return table|nil
+function boardModule.get_card(slot)
+    local field = boardModule.get_field(slot)
+    return field and field.card
+end
+
+--- Get field definition
+-- @param slot number (1-6)
+-- @return table|nil
+function boardModule.get_def(slot)
+    local field = boardModule.get_field(slot)
+    return field and field.def
+end
+
 --- Get visual layout row for UI
 -- @param player number (1 or 2)
 -- @return table Layout row (10 cells)

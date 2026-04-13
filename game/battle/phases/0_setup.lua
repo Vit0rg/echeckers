@@ -44,9 +44,7 @@ local function _setup_hands()
         Hands[2] = {}
 
         for i = 1, 2 do
-            for j = 1, HAND_SIZE do
-                _draw_card(i)
-            end
+            _draw_card(Decks[i], Hands[i], HAND_SIZE)
         end
     end
 end

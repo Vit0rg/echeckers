@@ -1604,21 +1604,28 @@ local process_card = function (card)
   }
 end
 -- /home/s1eep1ess/workspace/lua/echeckers/game/battle/functions/draw_card.lua
-local _draw_card = function(turn)
-    if #Decks[turn] == 0 then
-        UI.display('No cards on deck, skipping')
-        return
-    end
+-- Draw card(s) from a deck table into a hand table
+-- @param deck table The deck to draw from
+-- @param hand table The hand to draw into
+-- @param count number? Number of cards to draw (default 1)
+-- @return nil
+local _draw_card = function(deck, hand, count)
+    count = count or 1
 
-    local idx = 1
-    local deck_size = #Decks[turn]
+    for i = 1, count do
+        if #deck == 0 then
+            UI.display('No cards on deck, skipping')
+            break
+        end
 
-    Hands[turn][(#Hands[turn])+1] = process_card(Decks[turn][idx])
+        local idx = 1
+        local deck_size = #deck
 
-    -- O(1) removal: swap with last element instead of shifting
-    if deck_size > 0 then
-        Decks[turn][idx] = Decks[turn][deck_size]
-        Decks[turn][deck_size] = nil
+        hand[#hand + 1] = process_card(deck[idx])
+
+        -- O(1) removal: swap with last element instead of shifting
+        deck[idx] = deck[deck_size]
+        deck[deck_size] = nil
     end
 end
 -- /home/s1eep1ess/workspace/lua/echeckers/game/battle/functions/select_deck.lua
@@ -1712,6 +1719,51 @@ function boardModule.set_field_card(slot, card)
     end
 end
 
+--- Alias: set_card for backward compatibility
+function boardModule.set_card(slot, card)
+    boardModule.set_field_card(slot, card)
+end
+
+--- Check if field has no card
+-- @param slot number (1-6)
+-- @return boolean
+function boardModule.is_empty(slot)
+    local field = boardModule.get_field(slot)
+    return not field or field.card == nil
+end
+
+--- Remove card from field
+-- @param slot number (1-6)
+-- @return table|nil Removed card
+function boardModule.remove_card(slot)
+    local field = boardModule.get_field(slot)
+    if not field or not field.card then return nil end
+    local removed = field.card
+    field.card = nil
+    return removed
+end
+
+--- Alias: move (swap) for backward compatibility
+function boardModule.move(from, to)
+    boardModule.swap_fields(from, to)
+end
+
+--- Get card on field
+-- @param slot number (1-6)
+-- @return table|nil
+function boardModule.get_card(slot)
+    local field = boardModule.get_field(slot)
+    return field and field.card
+end
+
+--- Get field definition
+-- @param slot number (1-6)
+-- @return table|nil
+function boardModule.get_def(slot)
+    local field = boardModule.get_field(slot)
+    return field and field.def
+end
+
 --- Get visual layout row for UI
 -- @param player number (1 or 2)
 -- @return table Layout row (10 cells)
@@ -1756,74 +1808,6 @@ end
 -- Module is local, available to files after this in build order
 -- No export needed - files are concatenated in build_battle.txt
 
--- /home/s1eep1ess/workspace/lua/echeckers/game/battle/board/fields.lua
---- Fields operations module
--- Works with flat board structure
--- Uses globals: Player_turn, Board, boardModule
--- NOTE: This file is concatenated in build - module available to subsequent files
-
-local fieldsOps = {}
-
---- Check if field has no card
--- Uses globals: Player_turn, Board, boardModule
--- @param slot number (1-6)
--- @return boolean
-function fieldsOps.is_empty(slot)
-    local field = boardModule.get_field(slot)
-    return not field or field.card == nil
-end
-
---- Place card on field
--- Uses globals: Player_turn, Board, boardModule
--- @param slot number (1-6)
--- @param card table
-function fieldsOps.set_card(slot, card)
-    boardModule.set_field_card(slot, card)
-end
-
---- Remove card from field
--- Uses globals: Player_turn, Board, boardModule
--- @param slot number (1-6)
--- @return table|nil Removed card
-function fieldsOps.remove_card(slot)
-    local field = boardModule.get_field(slot)
-    if not field or not field.card then return nil end
-
-    local removed = field.card
-    field.card = nil
-    return removed
-end
-
---- Swap two fields
--- Uses globals: Player_turn, Board, boardModule
--- @param from number (1-6)
--- @param to number (1-6)
-function fieldsOps.move(from, to)
-    if from == to then return end
-    boardModule.swap_fields(from, to)
-end
-
---- Get card on field
--- Uses globals: Player_turn, Board, boardModule
--- @param slot number (1-6)
--- @return table|nil
-function fieldsOps.get_card(slot)
-    local field = boardModule.get_field(slot)
-    return field and field.card
-end
-
---- Get field definition
--- Uses globals: Player_turn, Board, boardModule
--- @param slot number (1-6)
--- @return table|nil
-function fieldsOps.get_def(slot)
-    local field = boardModule.get_field(slot)
-    return field and field.def
-end
-
--- Module is local, available to files after this in build order
--- No export needed - files are concatenated in build_battle.txt
-
 -- /home/s1eep1ess/workspace/lua/echeckers/game/battle/validation/2_standby_validation.lua
 --- Validation for standby phase operations
 -- Uses global state directly (Player_turn, Hands, Board)
@@ -1862,7 +1846,7 @@ function standbyValidation.validate_set_card(hand_index, field_index)
     end
     
     -- Validate field is empty
-    if not fieldsOps.is_empty(field_index) then
+    if not boardModule.is_empty(field_index) then
         return false, 'Field already occupied'
     end
 
@@ -1885,9 +1869,9 @@ function standbyValidation.validate_remove_card(field_index)
         return false, 'Board not initialized'
     end
 
-    -- Validate field has animal
-    if fieldsOps.is_empty(field_index) then
-        return false, 'No animal on field'
+    -- Validate field has card
+    if boardModule.is_empty(field_index) then
+        return false, 'No card on field'
     end
     
     return true
@@ -1968,9 +1952,7 @@ local function _setup_hands()
         Hands[2] = {}
 
         for i = 1, 2 do
-            for j = 1, HAND_SIZE do
-                _draw_card(i)
-            end
+            _draw_card(Decks[i], Hands[i], HAND_SIZE)
         end
     end
 end
@@ -2010,13 +1992,6 @@ local function setup()
 end
 
 -- /home/s1eep1ess/workspace/lua/echeckers/game/battle/phases/1_draw_phase.lua
-local _update_ui = function ()
-    -- Each player should not see the other hand
-    UI.update_hand(Hands[2], 'hidden')
-    UI.update_board(Board)
-    UI.update_hand(Hands[1])
-end
-
 local _discard = function ()
     if #Hands[Player_turn] > HAND_LIMIT then
         UI.display("Discard one card (not yet implemented)")
@@ -2025,8 +2000,7 @@ end
 
 local draw = function ()
     if MODE == 'basic' then
-        _draw_card(Player_turn)
-        _update_ui()
+        _draw_card(Decks[Player_turn], Hands[Player_turn])
         return
     end
 end
@@ -2050,11 +2024,8 @@ local _shuffle_hand = function()
         deck[#deck + 1] = hand[i]
     end
 
-    -- Draw new cards, overwriting existing indices
-    for i = 1, hand_size do
-        _draw_card(Player_turn)
-        hand[i] = hand[#hand]
-    end
+    -- Draw new cards into the hand
+    _draw_card(deck, hand, hand_size)
 
     return 0
 end
@@ -2078,7 +2049,7 @@ local _set_card = function(hand_index, field_index)
         return false
     end
 
-    fieldsOps.set_card(field_index, card)
+    boardModule.set_card(field_index, card)
 
     -- Remove card from hand by swapping with last element
     if hand_index < len then
@@ -2104,7 +2075,7 @@ local _remove_card = function(field_index)
         return false
     end
 
-    local removed = fieldsOps.remove_card(field_index)
+    local removed = boardModule.remove_card(field_index)
     if removed then
         trash[#trash + 1] = removed
     end
@@ -2122,13 +2093,13 @@ local _move_card = function(from_field, to_field)
     to_field = to_field or 2
 
     -- Validate source field has a card
-    if fieldsOps.is_empty(from_field) then
+    if boardModule.is_empty(from_field) then
         UI.display('Invalid move: No card on source field')
         return false
     end
 
     -- Validate destination field is empty and index is valid
-    if fieldsOps.is_empty(to_field) == false then
+    if boardModule.is_empty(to_field) == false then
         UI.display('Invalid move: Destination field is occupied')
         return false
     end
@@ -2143,7 +2114,7 @@ local _move_card = function(from_field, to_field)
         return false
     end
 
-    fieldsOps.move(from_field, to_field)
+    boardModule.move(from_field, to_field)
     return true
 end
 
@@ -2162,7 +2133,7 @@ local _move_field = function(from_field, to_field)
         return false
     end
 
-    return fieldsOps.move(from_field, to_field)
+    return boardModule.move(from_field, to_field)
 end
 
 --- Update UI display

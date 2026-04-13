@@ -17,11 +17,8 @@ local _shuffle_hand = function()
         deck[#deck + 1] = hand[i]
     end
 
-    -- Draw new cards, overwriting existing indices
-    for i = 1, hand_size do
-        _draw_card(Player_turn)
-        hand[i] = hand[#hand]
-    end
+    -- Draw new cards into the hand
+    _draw_card(deck, hand, hand_size)
 
     return 0
 end
@@ -45,7 +42,7 @@ local _set_card = function(hand_index, field_index)
         return false
     end
 
-    fieldsOps.set_card(field_index, card)
+    boardModule.set_card(field_index, card)
 
     -- Remove card from hand by swapping with last element
     if hand_index < len then
@@ -71,7 +68,7 @@ local _remove_card = function(field_index)
         return false
     end
 
-    local removed = fieldsOps.remove_card(field_index)
+    local removed = boardModule.remove_card(field_index)
     if removed then
         trash[#trash + 1] = removed
     end
@@ -89,13 +86,13 @@ local _move_card = function(from_field, to_field)
     to_field = to_field or 2
 
     -- Validate source field has a card
-    if fieldsOps.is_empty(from_field) then
+    if boardModule.is_empty(from_field) then
         UI.display('Invalid move: No card on source field')
         return false
     end
 
     -- Validate destination field is empty and index is valid
-    if fieldsOps.is_empty(to_field) == false then
+    if boardModule.is_empty(to_field) == false then
         UI.display('Invalid move: Destination field is occupied')
         return false
     end
@@ -110,7 +107,7 @@ local _move_card = function(from_field, to_field)
         return false
     end
 
-    fieldsOps.move(from_field, to_field)
+    boardModule.move(from_field, to_field)
     return true
 end
 
@@ -129,7 +126,7 @@ local _move_field = function(from_field, to_field)
         return false
     end
 
-    return fieldsOps.move(from_field, to_field)
+    return boardModule.move(from_field, to_field)
 end
 
 --- Update UI display
