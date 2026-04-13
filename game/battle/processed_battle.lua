@@ -1641,13 +1641,13 @@ end
 --   1-6:  Player 2 fields
 --   7-12: Player 1 fields
 
-local boardModule = {}
+local BoardOps = {}
 
 --- Get field index for player
 -- @param player number (1 or 2)
 -- @param index number (1-6)
 -- @return number Flat table index
-function boardModule.field_index(player, index)
+function BoardOps.field_index(player, index)
     if player == 1 then
         return 7 + index - 1
     else
@@ -1658,7 +1658,7 @@ end
 --- Get player from field index
 -- @param index number (1-12)
 -- @return number Player (1 or 2)
-function boardModule.field_player(index)
+function BoardOps.field_player(index)
     if index <= 6 then return 2 end
     return 1
 end
@@ -1666,7 +1666,7 @@ end
 --- Get field slot (1-6) from flat index
 -- @param index number (1-12)
 -- @return number Field slot
-function boardModule.field_slot(index)
+function BoardOps.field_slot(index)
     if index <= 6 then return index end
     return index - 6
 end
@@ -1675,7 +1675,7 @@ end
 -- @param fields_p1 table Player 1's fields (array of 6)
 -- @param fields_p2 table Player 2's fields (array of 6)
 -- @return table Board instance
-function boardModule.init(fields_p1, fields_p2)
+function BoardOps.init(fields_p1, fields_p2)
     local board = {}
 
     -- Fields: {def, card}
@@ -1702,9 +1702,9 @@ end
 -- Uses global: Player_turn
 -- @param slot number (1-6)
 -- @return table|nil Field {def, card}
-function boardModule.get_field(slot)
+function BoardOps.get_field(slot)
     if not Board then return nil end
-    local idx = boardModule.field_index(Player_turn, slot)
+    local idx = BoardOps.field_index(Player_turn, slot)
     return Board[idx]
 end
 
@@ -1712,31 +1712,31 @@ end
 -- Uses global: Player_turn
 -- @param slot number (1-6)
 -- @param card table|nil
-function boardModule.set_field_card(slot, card)
-    local field = boardModule.get_field(slot)
+function BoardOps.set_field_card(slot, card)
+    local field = BoardOps.get_field(slot)
     if field then
         field.card = card
     end
 end
 
 --- Alias: set_card for backward compatibility
-function boardModule.set_card(slot, card)
-    boardModule.set_field_card(slot, card)
+function BoardOps.set_card(slot, card)
+    BoardOps.set_field_card(slot, card)
 end
 
 --- Check if field has no card
 -- @param slot number (1-6)
 -- @return boolean
-function boardModule.is_empty(slot)
-    local field = boardModule.get_field(slot)
+function BoardOps.is_empty(slot)
+    local field = BoardOps.get_field(slot)
     return not field or field.card == nil
 end
 
 --- Remove card from field
 -- @param slot number (1-6)
 -- @return table|nil Removed card
-function boardModule.remove_card(slot)
-    local field = boardModule.get_field(slot)
+function BoardOps.remove_card(slot)
+    local field = BoardOps.get_field(slot)
     if not field or not field.card then return nil end
     local removed = field.card
     field.card = nil
@@ -1744,30 +1744,30 @@ function boardModule.remove_card(slot)
 end
 
 --- Alias: move (swap) for backward compatibility
-function boardModule.move(from, to)
-    boardModule.swap_fields(from, to)
+function BoardOps.move(from, to)
+    BoardOps.swap_fields(from, to)
 end
 
 --- Get card on field
 -- @param slot number (1-6)
 -- @return table|nil
-function boardModule.get_card(slot)
-    local field = boardModule.get_field(slot)
+function BoardOps.get_card(slot)
+    local field = BoardOps.get_field(slot)
     return field and field.card
 end
 
 --- Get field definition
 -- @param slot number (1-6)
 -- @return table|nil
-function boardModule.get_def(slot)
-    local field = boardModule.get_field(slot)
+function BoardOps.get_def(slot)
+    local field = BoardOps.get_field(slot)
     return field and field.def
 end
 
 --- Get visual layout row for UI
 -- @param player number (1 or 2)
 -- @return table Layout row (10 cells)
-function boardModule.get_layout_row(player)
+function BoardOps.get_layout_row(player)
     if not Board then return {} end
 
     if player == 2 then
@@ -1791,7 +1791,7 @@ end
 
 --- Get middle layout row
 -- @return table Middle row (5 cells)
-function boardModule.get_middle_row()
+function BoardOps.get_middle_row()
     return { '', 'SETUP', '', '', '' }
 end
 
@@ -1799,9 +1799,9 @@ end
 -- Uses global: Player_turn
 -- @param slot1 number (1-6)
 -- @param slot2 number (1-6)
-function boardModule.swap_fields(slot1, slot2)
-    local idx1 = boardModule.field_index(Player_turn, slot1)
-    local idx2 = boardModule.field_index(Player_turn, slot2)
+function BoardOps.swap_fields(slot1, slot2)
+    local idx1 = BoardOps.field_index(Player_turn, slot1)
+    local idx2 = BoardOps.field_index(Player_turn, slot2)
     Board[idx1], Board[idx2] = Board[idx2], Board[idx1]
 end
 
@@ -1846,7 +1846,7 @@ function standbyValidation.validate_set_card(hand_index, field_index)
     end
     
     -- Validate field is empty
-    if not boardModule.is_empty(field_index) then
+    if not BoardOps.is_empty(field_index) then
         return false, 'Field already occupied'
     end
 
@@ -1870,7 +1870,7 @@ function standbyValidation.validate_remove_card(field_index)
     end
 
     -- Validate field has card
-    if boardModule.is_empty(field_index) then
+    if BoardOps.is_empty(field_index) then
         return false, 'No card on field'
     end
     
@@ -1941,7 +1941,7 @@ end
 
 local function _setup_board(MODE)
     if MODE == 'basic' then
-        Board = boardModule.init(Fields[1], Fields[2])
+        Board = BoardOps.init(Fields[1], Fields[2])
     end
 end
 
@@ -2049,7 +2049,7 @@ local _set_card = function(hand_index, field_index)
         return false
     end
 
-    boardModule.set_card(field_index, card)
+    BoardOps.set_card(field_index, card)
 
     -- Remove card from hand by swapping with last element
     if hand_index < len then
@@ -2075,7 +2075,7 @@ local _remove_card = function(field_index)
         return false
     end
 
-    local removed = boardModule.remove_card(field_index)
+    local removed = BoardOps.remove_card(field_index)
     if removed then
         trash[#trash + 1] = removed
     end
@@ -2093,13 +2093,13 @@ local _move_card = function(from_field, to_field)
     to_field = to_field or 2
 
     -- Validate source field has a card
-    if boardModule.is_empty(from_field) then
+    if BoardOps.is_empty(from_field) then
         UI.display('Invalid move: No card on source field')
         return false
     end
 
     -- Validate destination field is empty and index is valid
-    if boardModule.is_empty(to_field) == false then
+    if BoardOps.is_empty(to_field) == false then
         UI.display('Invalid move: Destination field is occupied')
         return false
     end
@@ -2114,7 +2114,7 @@ local _move_card = function(from_field, to_field)
         return false
     end
 
-    boardModule.move(from_field, to_field)
+    BoardOps.move(from_field, to_field)
     return true
 end
 
@@ -2133,7 +2133,7 @@ local _move_field = function(from_field, to_field)
         return false
     end
 
-    return boardModule.move(from_field, to_field)
+    return BoardOps.move(from_field, to_field)
 end
 
 --- Update UI display
@@ -2446,9 +2446,9 @@ local function _TUI_update_board(board)
         local layout_row
 
         if mapping.row_func == 'get_layout_row' then
-            layout_row = boardModule.get_layout_row(mapping.player)
+            layout_row = BoardOps.get_layout_row(mapping.player)
         else
-            layout_row = boardModule.get_middle_row()
+            layout_row = BoardOps.get_middle_row()
         end
 
         for col = 1, 5 do

@@ -42,7 +42,7 @@ local _set_card = function(hand_index, field_index)
         return false
     end
 
-    boardModule.set_card(field_index, card)
+    BoardOps.set_card(field_index, card)
 
     -- Remove card from hand by swapping with last element
     if hand_index < len then
@@ -68,7 +68,7 @@ local _remove_card = function(field_index)
         return false
     end
 
-    local removed = boardModule.remove_card(field_index)
+    local removed = BoardOps.remove_card(field_index)
     if removed then
         trash[#trash + 1] = removed
     end
@@ -86,13 +86,13 @@ local _move_card = function(from_field, to_field)
     to_field = to_field or 2
 
     -- Validate source field has a card
-    if boardModule.is_empty(from_field) then
+    if BoardOps.is_empty(from_field) then
         UI.display('Invalid move: No card on source field')
         return false
     end
 
     -- Validate destination field is empty and index is valid
-    if boardModule.is_empty(to_field) == false then
+    if BoardOps.is_empty(to_field) == false then
         UI.display('Invalid move: Destination field is occupied')
         return false
     end
@@ -107,7 +107,7 @@ local _move_card = function(from_field, to_field)
         return false
     end
 
-    boardModule.move(from_field, to_field)
+    BoardOps.move(from_field, to_field)
     return true
 end
 
@@ -126,7 +126,7 @@ local _move_field = function(from_field, to_field)
         return false
     end
 
-    return boardModule.move(from_field, to_field)
+    return BoardOps.move(from_field, to_field)
 end
 
 --- Update UI display

@@ -33,7 +33,7 @@ end
 
 local function _setup_board(MODE)
     if MODE == 'basic' then
-        Board = boardModule.init(Fields[1], Fields[2])
+        Board = BoardOps.init(Fields[1], Fields[2])
     end
 end
 

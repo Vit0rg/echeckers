@@ -35,7 +35,7 @@ function standbyValidation.validate_set_card(hand_index, field_index)
     end
     
     -- Validate field is empty
-    if not boardModule.is_empty(field_index) then
+    if not BoardOps.is_empty(field_index) then
         return false, 'Field already occupied'
     end
 
@@ -59,7 +59,7 @@ function standbyValidation.validate_remove_card(field_index)
     end
 
     -- Validate field has card
-    if boardModule.is_empty(field_index) then
+    if BoardOps.is_empty(field_index) then
         return false, 'No card on field'
     end
     
